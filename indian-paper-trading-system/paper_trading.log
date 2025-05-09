@@ -1,0 +1,222 @@
+2025-05-04 18:43:06,488 - PaperTrading - WARNING - Dashboard modules not available, disabling dashboard
+2025-05-04 18:43:06,492 - PaperTrading - INFO - Initializing paper trading system
+2025-05-04 18:43:06,493 - PaperTrading - INFO - Trading symbols: ['HDFCBANK', 'RELIANCE', 'INFY']
+2025-05-04 18:43:06,688 - data.fetchers.zerodha_fetcher - INFO - Connecting to Zerodha Kite Connect...
+2025-05-04 18:43:06,689 - data.fetchers.zerodha_fetcher - WARNING - No access token provided. Authentication flow required.
+2025-05-04 18:43:07,107 - data.fetchers.zerodha_fetcher - INFO - Initialized 7822 instrument tokens
+2025-05-04 18:43:07,109 - PaperTrading - INFO - Zerodha data fetcher initialized
+2025-05-04 18:43:07,110 - data.fetchers.nse_fetcher - INFO - Refreshing NSE session...
+2025-05-04 18:43:22,821 - data.fetchers.nse_fetcher - INFO - NSE session refreshed successfully
+2025-05-04 18:43:22,821 - PaperTrading - INFO - NSE data fetcher initialized
+2025-05-04 18:43:22,822 - data.processors.indicators - INFO - Initializing IndicatorProcessor
+2025-05-04 18:43:22,823 - engine.risk_manager - INFO - RiskManager initialized with balance: ₹100000.00
+2025-05-04 18:43:22,824 - data.processors.indicators - INFO - Initializing IndicatorProcessor
+2025-05-04 18:43:22,824 - engine.environment - INFO - Trading environment initialized with balance: ₹100000.00
+2025-05-04 18:43:22,825 - engine.strategy - INFO - Strategy 'MultiTechnicalStrategy' initialized
+2025-05-04 18:43:22,825 - engine.strategy - INFO - Multi-technical strategy 'MultiTechnicalStrategy' initialized
+2025-05-04 18:43:22,825 - engine.strategy - INFO - Strategy 'SwingTradingStrategy' initialized
+2025-05-04 18:43:22,825 - engine.strategy - INFO - Swing trading strategy 'SwingTradingStrategy' initialized
+2025-05-04 18:43:22,825 - engine.strategy - INFO - Strategy 'RLStrategy' initialized
+2025-05-04 18:43:22,825 - engine.strategy - INFO - RL-based strategy 'RLStrategy' initialized
+2025-05-04 18:43:22,825 - PaperTrading - WARNING - No models found for RL strategy, not using it
+2025-05-04 18:43:22,826 - PaperTrading - INFO - Trading strategies initialized: ['multi_technical', 'swing']
+2025-05-04 18:43:22,826 - PaperTrading - INFO - Active strategy set to multi_technical
+2025-05-04 18:43:22,827 - scheduler.market_scheduler - INFO - MarketScheduler initialized
+2025-05-04 18:43:22,827 - scheduler.market_scheduler - INFO - Trading symbols set: ['HDFCBANK', 'RELIANCE', 'INFY']
+2025-05-04 18:43:22,827 - PaperTrading - INFO - Scheduler callbacks registered
+2025-05-04 18:43:22,827 - PaperTrading - INFO - Paper trading system initialized
+2025-05-04 18:43:22,827 - PaperTrading - INFO - Starting paper trading system
+2025-05-04 18:43:22,829 - PaperTrading - INFO - Market is currently closed
+2025-05-04 18:43:22,830 - PaperTrading - INFO - Next market open in 9.03 hours
+2025-05-04 18:43:22,831 - scheduler.market_scheduler - INFO - Starting market scheduler
+2025-05-04 18:43:22,831 - scheduler.market_scheduler - INFO - Scheduled pre-market routine at 09:00
+2025-05-04 18:43:22,832 - scheduler.market_scheduler - INFO - Scheduled market open routine at 09:15
+2025-05-04 18:43:22,832 - scheduler.market_scheduler - INFO - Scheduled market update routine every minute
+2025-05-04 18:43:22,832 - scheduler.market_scheduler - INFO - Scheduled market close routine at 15:30
+2025-05-04 18:43:22,832 - scheduler.market_scheduler - INFO - Scheduled post-market routine at 16:00
+2025-05-04 18:43:22,833 - scheduler.market_scheduler - INFO - Market scheduler started
+2025-05-04 18:43:22,834 - PaperTrading - INFO - Paper trading system started
+2025-05-04 18:43:22,834 - scheduler.market_scheduler - INFO - Manual update triggered
+2025-05-04 18:43:22,838 - scheduler.market_scheduler - WARNING - Market is closed, update may not reflect real-time data
+2025-05-04 18:43:22,879 - data.fetchers.zerodha_fetcher - ERROR - Error fetching live data: Invalid `api_key` or `access_token`.
+2025-05-04 18:43:22,879 - scheduler.market_scheduler - ERROR - Error updating data from Zerodha: Invalid `api_key` or `access_token`.
+2025-05-04 18:43:22,978 - data.fetchers.nse_fetcher - ERROR - Error fetching equity quote for HDFCBANK: 401 Client Error: Unauthorized for url: https://www.nseindia.com/api/quote-equity?symbol=HDFCBANK
+2025-05-04 18:43:22,978 - data.fetchers.nse_fetcher - INFO - Refreshing NSE session...
+2025-05-04 18:43:23,338 - data.fetchers.nse_fetcher - INFO - NSE session refreshed successfully
+2025-05-04 18:43:23,420 - data.fetchers.nse_fetcher - ERROR - Error retrying equity quote fetch for HDFCBANK: 401 Client Error: Unauthorized for url: https://www.nseindia.com/api/quote-equity?symbol=HDFCBANK
+2025-05-04 18:43:23,420 - scheduler.market_scheduler - ERROR - Error updating data from NSE: 401 Client Error: Unauthorized for url: https://www.nseindia.com/api/quote-equity?symbol=HDFCBANK
+2025-05-04 18:43:23,421 - scheduler.market_scheduler - ERROR - No data fetchers available to update market data
+2025-05-04 18:43:58,333 - PaperTrading - INFO - Shutdown signal received
+2025-05-04 18:43:58,333 - PaperTrading - INFO - Stopping paper trading system
+2025-05-04 18:43:58,333 - scheduler.market_scheduler - INFO - Stopping market scheduler
+2025-05-04 18:43:58,842 - scheduler.market_scheduler - INFO - Market scheduler stopped
+2025-05-04 18:43:58,843 - engine.environment - INFO - State saved to data/states/state_final.json
+2025-05-04 18:43:58,843 - PaperTrading - INFO - Paper trading system stopped
+2025-05-04 18:43:58,844 - PaperTrading - INFO - Paper Trading System shutdown complete
+2025-05-04 18:44:28,143 - PaperTrading - WARNING - Dashboard modules not available, disabling dashboard
+2025-05-04 18:44:28,144 - PaperTrading - INFO - Initializing paper trading system
+2025-05-04 18:44:28,144 - PaperTrading - INFO - Trading symbols: ['SBIN', 'TCS']
+2025-05-04 18:44:28,237 - data.fetchers.zerodha_fetcher - INFO - Connecting to Zerodha Kite Connect...
+2025-05-04 18:44:28,237 - data.fetchers.zerodha_fetcher - WARNING - No access token provided. Authentication flow required.
+2025-05-04 18:44:28,557 - data.fetchers.zerodha_fetcher - INFO - Initialized 7822 instrument tokens
+2025-05-04 18:44:28,559 - PaperTrading - INFO - Zerodha data fetcher initialized
+2025-05-04 18:44:28,559 - data.fetchers.nse_fetcher - INFO - Refreshing NSE session...
+2025-05-04 18:44:44,095 - data.fetchers.nse_fetcher - INFO - NSE session refreshed successfully
+2025-05-04 18:44:44,095 - PaperTrading - INFO - NSE data fetcher initialized
+2025-05-04 18:44:44,095 - data.processors.indicators - INFO - Initializing IndicatorProcessor
+2025-05-04 18:44:44,095 - engine.risk_manager - INFO - RiskManager initialized with balance: ₹100000.00
+2025-05-04 18:44:44,095 - data.processors.indicators - INFO - Initializing IndicatorProcessor
+2025-05-04 18:44:44,095 - engine.environment - INFO - Trading environment initialized with balance: ₹100000.00
+2025-05-04 18:44:44,096 - engine.strategy - INFO - Strategy 'MultiTechnicalStrategy' initialized
+2025-05-04 18:44:44,096 - engine.strategy - INFO - Multi-technical strategy 'MultiTechnicalStrategy' initialized
+2025-05-04 18:44:44,096 - engine.strategy - INFO - Strategy 'SwingTradingStrategy' initialized
+2025-05-04 18:44:44,096 - engine.strategy - INFO - Swing trading strategy 'SwingTradingStrategy' initialized
+2025-05-04 18:44:44,096 - engine.strategy - INFO - Strategy 'RLStrategy' initialized
+2025-05-04 18:44:44,096 - engine.strategy - INFO - RL-based strategy 'RLStrategy' initialized
+2025-05-04 18:44:44,096 - PaperTrading - WARNING - No models found for RL strategy, not using it
+2025-05-04 18:44:44,096 - PaperTrading - INFO - Trading strategies initialized: ['multi_technical', 'swing']
+2025-05-04 18:44:44,096 - PaperTrading - INFO - Active strategy set to swing
+2025-05-04 18:44:44,096 - scheduler.market_scheduler - INFO - MarketScheduler initialized
+2025-05-04 18:44:44,096 - scheduler.market_scheduler - INFO - Trading symbols set: ['SBIN', 'TCS']
+2025-05-04 18:44:44,096 - PaperTrading - INFO - Scheduler callbacks registered
+2025-05-04 18:44:44,096 - PaperTrading - INFO - Paper trading system initialized
+2025-05-04 18:44:44,096 - PaperTrading - INFO - Running trading simulation for 5 days
+2025-05-04 18:44:44,096 - scheduler.market_scheduler - INFO - Starting trading simulation for 5 days
+2025-05-04 18:44:44,096 - scheduler.market_scheduler - INFO - Day 1: Pre-market
+2025-05-04 18:44:44,096 - scheduler.market_scheduler - INFO - Running pre-market routine
+2025-05-04 18:44:44,147 - data.fetchers.zerodha_fetcher - ERROR - Error fetching live data: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:44,147 - scheduler.market_scheduler - ERROR - Error updating data from Zerodha: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:44,198 - data.fetchers.nse_fetcher - ERROR - Error fetching equity quote for SBIN: 401 Client Error: Unauthorized for url: https://www.nseindia.com/api/quote-equity?symbol=SBIN
+2025-05-04 18:44:44,198 - data.fetchers.nse_fetcher - INFO - Refreshing NSE session...
+2025-05-04 18:44:44,548 - data.fetchers.nse_fetcher - INFO - NSE session refreshed successfully
+2025-05-04 18:44:44,600 - data.fetchers.nse_fetcher - ERROR - Error retrying equity quote fetch for SBIN: 401 Client Error: Unauthorized for url: https://www.nseindia.com/api/quote-equity?symbol=SBIN
+2025-05-04 18:44:44,600 - scheduler.market_scheduler - ERROR - Error updating data from NSE: 401 Client Error: Unauthorized for url: https://www.nseindia.com/api/quote-equity?symbol=SBIN
+2025-05-04 18:44:44,601 - scheduler.market_scheduler - ERROR - No data fetchers available to update market data
+2025-05-04 18:44:44,601 - PaperTrading - INFO - Running pre-market routine
+2025-05-04 18:44:44,601 - data.fetchers.zerodha_fetcher - WARNING - Historical data file not found for SBIN at data/historical/SBIN.csv
+2025-05-04 18:44:44,636 - data.fetchers.zerodha_fetcher - ERROR - Error fetching historical data for SBIN: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:44,636 - data.fetchers.zerodha_fetcher - ERROR - Error updating historical data for SBIN: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:44,636 - PaperTrading - ERROR - Error updating historical data for SBIN: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:44,636 - data.fetchers.zerodha_fetcher - WARNING - Historical data file not found for TCS at data/historical/TCS.csv
+2025-05-04 18:44:44,670 - data.fetchers.zerodha_fetcher - ERROR - Error fetching historical data for TCS: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:44,670 - data.fetchers.zerodha_fetcher - ERROR - Error updating historical data for TCS: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:44,670 - PaperTrading - ERROR - Error updating historical data for TCS: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:44,707 - data.fetchers.nse_fetcher - ERROR - Error fetching market status: Expecting value: line 1 column 1 (char 0)
+2025-05-04 18:44:44,707 - PaperTrading - ERROR - Error fetching market status: Expecting value: line 1 column 1 (char 0)
+2025-05-04 18:44:45,708 - scheduler.market_scheduler - INFO - Day 1: Market open
+2025-05-04 18:44:45,708 - scheduler.market_scheduler - INFO - Running market open routine
+2025-05-04 18:44:45,746 - data.fetchers.zerodha_fetcher - ERROR - Error fetching live data: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:45,746 - scheduler.market_scheduler - ERROR - Error updating data from Zerodha: Invalid `api_key` or `access_token`.
+2025-05-04 18:44:45,805 - data.fetchers.nse_fetcher - ERROR - Error fetching equity quote for SBIN: 401 Client Error: Unauthorized for url: https://www.nseindia.com/api/quote-equity?symbol=SBIN
+2025-05-04 18:44:45,805 - data.fetchers.nse_fetcher - INFO - Refreshing NSE session...
+2025-05-04 18:44:46,085 - data.fetchers.nse_fetcher - INFO - NSE session refreshed successfully
+2025-05-04 18:44:46,131 - data.fetchers.nse_fetcher - ERROR - Error retrying equity quote fetch for SBIN: 401 Client Error: Unauthorized for url: https://www.nseindia.com/api/quote-equity?symbol=SBIN
+2025-05-04 18:44:46,131 - scheduler.market_scheduler - ERROR - Error updating data from NSE: 401 Client Error: Unauthorized for url: https://www.nseindia.com/api/quote-equity?symbol=SBIN
+2025-05-04 18:44:46,132 - scheduler.market_scheduler - ERROR - No data fetchers available to update market data
+2025-05-04 18:44:46,132 - PaperTrading - INFO - Running market open routine
+2025-05-04 18:44:46,132 - engine.environment - INFO - State saved to data/states/state_20250504_open.json
+2025-05-04 18:44:47,132 - scheduler.market_scheduler - INFO - Day 1: Market hours
+2025-05-04 18:44:47,133 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:44:52,134 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:44:57,134 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:02,135 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:07,135 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:12,136 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:17,136 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:22,137 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:27,137 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:32,138 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:37,138 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:42,139 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:47,139 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:52,140 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:45:57,140 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:02,141 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:07,141 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:12,142 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:17,142 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:22,143 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:27,144 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:32,144 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:37,145 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:42,145 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:47,146 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:52,146 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:46:57,147 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:47:02,147 - scheduler.market_scheduler - INFO - Market is now closed, stopping updates
+2025-05-04 18:47:04,821 - PaperTrading - INFO - Shutdown signal received
+2025-05-04 18:47:04,821 - PaperTrading - INFO - Stopping paper trading system
+2025-05-04 18:47:04,822 - scheduler.market_scheduler - WARNING - Scheduler is not running
+2025-05-04 18:47:04,822 - engine.environment - INFO - State saved to data/states/state_final.json
+2025-05-04 18:47:04,822 - PaperTrading - INFO - Paper trading system stopped
+2025-05-04 18:47:04,822 - PaperTrading - INFO - Paper Trading System shutdown complete
+2025-05-05 07:11:50,457 - PaperTrading - WARNING - Dashboard modules not available, disabling dashboard
+2025-05-05 07:11:50,460 - PaperTrading - INFO - Initializing paper trading system
+2025-05-05 07:11:50,461 - PaperTrading - INFO - Trading symbols: ['HDFCBANK', 'RELIANCE', 'INFY']
+2025-05-05 07:11:50,712 - data.fetchers.zerodha_fetcher - INFO - Connecting to Zerodha Kite Connect...
+2025-05-05 07:11:50,713 - data.fetchers.zerodha_fetcher - WARNING - No access token provided. Authentication flow required.
+2025-05-05 07:11:51,272 - data.fetchers.zerodha_fetcher - INFO - Initialized 7822 instrument tokens
+2025-05-05 07:11:51,274 - PaperTrading - INFO - Zerodha data fetcher initialized
+2025-05-05 07:11:51,275 - data.fetchers.nse_fetcher - INFO - Refreshing NSE session...
+2025-05-05 07:12:06,939 - data.fetchers.nse_fetcher - INFO - NSE session refreshed successfully
+2025-05-05 07:12:06,939 - PaperTrading - INFO - NSE data fetcher initialized
+2025-05-05 07:12:06,939 - data.processors.indicators - INFO - Initializing IndicatorProcessor
+2025-05-05 07:12:06,940 - engine.risk_manager - INFO - RiskManager initialized with balance: ₹100000.00
+2025-05-05 07:12:06,940 - data.processors.indicators - INFO - Initializing IndicatorProcessor
+2025-05-05 07:12:06,940 - engine.environment - INFO - Trading environment initialized with balance: ₹100000.00
+2025-05-05 07:12:06,940 - engine.strategy - INFO - Strategy 'MultiTechnicalStrategy' initialized
+2025-05-05 07:12:06,940 - engine.strategy - INFO - Multi-technical strategy 'MultiTechnicalStrategy' initialized
+2025-05-05 07:12:06,940 - engine.strategy - INFO - Strategy 'SwingTradingStrategy' initialized
+2025-05-05 07:12:06,940 - engine.strategy - INFO - Swing trading strategy 'SwingTradingStrategy' initialized
+2025-05-05 07:12:06,940 - engine.strategy - INFO - Strategy 'RLStrategy' initialized
+2025-05-05 07:12:06,940 - engine.strategy - INFO - RL-based strategy 'RLStrategy' initialized
+2025-05-05 07:12:06,940 - PaperTrading - WARNING - No models found for RL strategy, not using it
+2025-05-05 07:12:06,941 - PaperTrading - INFO - Trading strategies initialized: ['multi_technical', 'swing']
+2025-05-05 07:12:06,941 - PaperTrading - INFO - Active strategy set to multi_technical
+2025-05-05 07:12:06,941 - scheduler.market_scheduler - INFO - MarketScheduler initialized
+2025-05-05 07:12:06,941 - scheduler.market_scheduler - INFO - Trading symbols set: ['HDFCBANK', 'RELIANCE', 'INFY']
+2025-05-05 07:12:06,941 - PaperTrading - INFO - Scheduler callbacks registered
+2025-05-05 07:12:06,941 - PaperTrading - INFO - Paper trading system initialized
+2025-05-05 07:12:06,941 - PaperTrading - INFO - Starting paper trading system
+2025-05-05 07:12:06,942 - PaperTrading - INFO - Market is currently open, starting trading
+2025-05-05 07:12:06,943 - PaperTrading - INFO - Running pre-market routine
+2025-05-05 07:12:06,943 - data.fetchers.zerodha_fetcher - WARNING - Historical data file not found for HDFCBANK at data/historical/HDFCBANK.csv
+2025-05-05 07:12:07,146 - data.fetchers.zerodha_fetcher - ERROR - Error fetching historical data for HDFCBANK: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,146 - data.fetchers.zerodha_fetcher - ERROR - Error updating historical data for HDFCBANK: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,146 - PaperTrading - ERROR - Error updating historical data for HDFCBANK: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,146 - data.fetchers.zerodha_fetcher - WARNING - Historical data file not found for RELIANCE at data/historical/RELIANCE.csv
+2025-05-05 07:12:07,253 - data.fetchers.zerodha_fetcher - ERROR - Error fetching historical data for RELIANCE: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,254 - data.fetchers.zerodha_fetcher - ERROR - Error updating historical data for RELIANCE: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,254 - PaperTrading - ERROR - Error updating historical data for RELIANCE: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,254 - data.fetchers.zerodha_fetcher - WARNING - Historical data file not found for INFY at data/historical/INFY.csv
+2025-05-05 07:12:07,352 - data.fetchers.zerodha_fetcher - ERROR - Error fetching historical data for INFY: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,353 - data.fetchers.zerodha_fetcher - ERROR - Error updating historical data for INFY: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,353 - PaperTrading - ERROR - Error updating historical data for INFY: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,460 - data.fetchers.nse_fetcher - ERROR - Error fetching market status: Extra data: line 1 column 2 (char 1)
+2025-05-05 07:12:07,460 - PaperTrading - ERROR - Error fetching market status: Extra data: line 1 column 2 (char 1)
+2025-05-05 07:12:07,460 - PaperTrading - INFO - Running market open routine
+2025-05-05 07:12:07,461 - engine.environment - INFO - State saved to data/states/state_20250505_open.json
+2025-05-05 07:12:07,461 - scheduler.market_scheduler - INFO - Starting market scheduler
+2025-05-05 07:12:07,461 - scheduler.market_scheduler - INFO - Scheduled pre-market routine at 09:00
+2025-05-05 07:12:07,461 - scheduler.market_scheduler - INFO - Scheduled market open routine at 09:15
+2025-05-05 07:12:07,461 - scheduler.market_scheduler - INFO - Scheduled market update routine every minute
+2025-05-05 07:12:07,461 - scheduler.market_scheduler - INFO - Scheduled market close routine at 15:30
+2025-05-05 07:12:07,461 - scheduler.market_scheduler - INFO - Scheduled post-market routine at 16:00
+2025-05-05 07:12:07,462 - scheduler.market_scheduler - INFO - Market scheduler started
+2025-05-05 07:12:07,462 - PaperTrading - INFO - Paper trading system started
+2025-05-05 07:12:07,462 - scheduler.market_scheduler - INFO - Manual update triggered
+2025-05-05 07:12:07,559 - data.fetchers.zerodha_fetcher - ERROR - Error fetching live data: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,560 - scheduler.market_scheduler - ERROR - Error updating data from Zerodha: Invalid `api_key` or `access_token`.
+2025-05-05 07:12:07,662 - data.fetchers.nse_fetcher - ERROR - Error fetching equity quote for HDFCBANK: Expecting value: line 1 column 1 (char 0)
+2025-05-05 07:12:07,662 - data.fetchers.nse_fetcher - INFO - Refreshing NSE session...
+2025-05-05 07:12:08,030 - data.fetchers.nse_fetcher - INFO - NSE session refreshed successfully
+2025-05-05 07:12:08,158 - data.fetchers.nse_fetcher - ERROR - Error retrying equity quote fetch for HDFCBANK: Expecting value: line 1 column 1 (char 0)
+2025-05-05 07:12:08,158 - scheduler.market_scheduler - ERROR - Error updating data from NSE: Expecting value: line 1 column 1 (char 0)
+2025-05-05 07:12:08,159 - scheduler.market_scheduler - ERROR - No data fetchers available to update market data
+2025-05-05 07:12:37,717 - PaperTrading - INFO - Shutdown signal received
+2025-05-05 07:12:37,717 - PaperTrading - INFO - Stopping paper trading system
+2025-05-05 07:12:37,717 - scheduler.market_scheduler - INFO - Stopping market scheduler
+2025-05-05 07:12:38,471 - scheduler.market_scheduler - INFO - Market scheduler stopped
+2025-05-05 07:12:38,472 - engine.environment - INFO - State saved to data/states/state_final.json
+2025-05-05 07:12:38,472 - PaperTrading - INFO - Paper trading system stopped
+2025-05-05 07:12:38,472 - PaperTrading - INFO - Paper Trading System shutdown complete

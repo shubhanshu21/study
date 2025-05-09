@@ -1,0 +1,12 @@
+2025-05-05 19:28:08 - models.model_factory - ERROR - Model file not found for ASIANPAINT: /var/www/html/python/rl_trading_bot/models/saved/ppo_ASIANPAINT.zip
+2025-05-05 19:28:08 - trading.zerodha_broker - ERROR - Error getting historical data for ASIANPAINT: Invalid `api_key` or `access_token`.
+2025-05-05 19:28:08 - trading.strategy - ERROR - Could not initialize data for ASIANPAINT
+2025-05-05 19:28:08 - models.model_factory - ERROR - Model file not found for BAJFINANCE: /var/www/html/python/rl_trading_bot/models/saved/ppo_BAJFINANCE.zip
+2025-05-05 19:28:09 - trading.zerodha_broker - ERROR - Error getting historical data for BAJFINANCE: Invalid `api_key` or `access_token`.
+2025-05-05 19:28:09 - trading.strategy - ERROR - Could not initialize data for BAJFINANCE
+2025-05-05 20:05:46 - models.model_factory - ERROR - Model file not found for ASIANPAINT: /var/www/html/python/rl_trading_bot/models/saved/ppo_ASIANPAINT.zip
+2025-05-05 20:05:46 - trading.zerodha_broker - ERROR - Error getting historical data for ASIANPAINT: Invalid `api_key` or `access_token`.
+2025-05-05 20:05:46 - trading.strategy - ERROR - Could not initialize data for ASIANPAINT
+2025-05-05 20:05:46 - models.model_factory - ERROR - Model file not found for BAJFINANCE: /var/www/html/python/rl_trading_bot/models/saved/ppo_BAJFINANCE.zip
+2025-05-05 20:05:47 - trading.zerodha_broker - ERROR - Error getting historical data for BAJFINANCE: Invalid `api_key` or `access_token`.
+2025-05-05 20:05:47 - trading.strategy - ERROR - Could not initialize data for BAJFINANCE

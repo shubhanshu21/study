@@ -1,0 +1,19 @@
+{
+    "current_balance": 100000.0,
+    "current_date": "2025-05-05",
+    "current_time": "12:42:06.940542",
+    "positions": {},
+    "net_worth_history": [
+        100000.0
+    ],
+    "trades": [],
+    "daily_stats": [],
+    "risk_manager": {
+        "max_drawdown": 0,
+        "consecutive_wins": 0,
+        "consecutive_losses": 0,
+        "daily_trades": 0,
+        "position_size_pct": 0.4,
+        "drawdown_reduction_applied": false
+    }
+}

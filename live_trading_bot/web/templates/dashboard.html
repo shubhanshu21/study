@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - RL Trading Bot{% endblock %}
+{% block active_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Dashboard</h1>
+        <p class="lead">Real-time trading performance and system status</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">Account Balance</div>
+            <div class="card-body">
+                <h5 class="card-title" id="account-balance">₹0.00</h5>
+                <p class="card-text" id="account-change">0.00%</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">Open Positions</div>
+            <div class="card-body">
+                <h5 class="card-title" id="position-count">0</h5>
+                <p class="card-text" id="position-value">₹0.00</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-header">Today's P/L</div>
+            <div class="card-body">
+                <h5 class="card-title" id="daily-pnl">₹0.00</h5>
+                <p class="card-text" id="daily-pnl-percent">0.00%</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Equity Curve</h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <select id="equity-timeframe" class="form-select form-select-sm d-inline-block w-auto">
+                            <option value="1d">1 Day</option>
+                            <option value="1w">1 Week</option>
+                            <option value="1m" selected>1 Month</option>
+                            <option value="3m">3 Months</option>
+                            <option value="6m">6 Months</option>
+                            <option value="1y">1 Year</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="equity-chart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>Key Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <tbody>
+                            <tr>
+                                <td>Total Return</td>
+                                <td id="total-return">0.00%</td>
+                            </tr>
+                            <tr>
+                                <td>Annual Return</td>
+                                <td id="annual-return">0.00%</td>
+                            </tr>
+                            <tr>
+                                <td>Sharpe Ratio</td>
+                                <td id="sharpe-ratio">0.00</td>
+                            </tr>
+                            <tr>
+                                <td>Max Drawdown</td>
+                                <td id="max-drawdown">0.00%</td>
+                            </tr>
+                            <tr>
+                                <td>Win Rate</td>
+                                <td id="win-rate">0.00%</td>
+                            </tr>
+                            <tr>
+                                <td>Profit Factor</td>
+                                <td id="profit-factor">0.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>Open Positions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Entry Date</th>
+                                <th>Entry Price</th>
+                                <th>Quantity</th>
+                                <th>Current Price</th>
+                                <th>P/L</th>
+                                <th>P/L %</th>
+                                <th>Stop Loss</th>
+                                <th>Target</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="positions-table-body">
+                            <tr>
+                                <td colspan="10" class="text-center">No open positions</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>Recent Trades</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>P/L</th>
+                                <th>P/L %</th>
+                                <th>Exit Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trades-table-body">
+                            <tr>
+                                <td colspan="8" class="text-center">No recent trades</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end">
+                    <a href="/trades" class="btn btn-primary btn-sm">View All Trades</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Dashboard initialization
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch initial data
+        fetchDashboardData();
+        
+        // Set up refresh interval (every 60 seconds)
+        setInterval(fetchDashboardData, 60000);
+        
+        // Set up equity timeframe change handler
+        document.getElementById('equity-timeframe').addEventListener('change', function() {
+            fetchEquityCurve(this.value);
+        });
+        
+        // Initialize equity chart
+        initEquityChart();
+        
+        // Fetch initial equity curve data
+        fetchEquityCurve('1m');
+    });
+    
+    // Function to fetch dashboard data
+    function fetchDashboardData() {
+        fetch('/api/status')
+            .then(response => response.json())
+            .then(data => {
+                updateAccountInfo(data);
+                updatePositionsTable(data.positions);
+                updateTradesTable(data.recent_trades);
+                updateMetrics(data.metrics);
+            })
+            .catch(error => {
+                console.error('Error fetching dashboard data:', error);
+            });
+    }
+    
+    // More JavaScript functions would go here
+</script>
+{% endblock %}

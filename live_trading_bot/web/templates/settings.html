@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - RL Trading Bot{% endblock %}
+{% block active_settings %}active{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Settings</h1>
+        <p class="lead">Configure trading parameters and system settings</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="list-group">
+            <a href="#trading-params" class="list-group-item list-group-item-action active" data-bs-toggle="list">Trading Parameters</a>
+            <a href="#risk-management" class="list-group-item list-group-item-action" data-bs-toggle="list">Risk Management</a>
+            <a href="#symbols" class="list-group-item list-group-item-action" data-bs-toggle="list">Trading Symbols</a>
+            <a href="#scheduler" class="list-group-item list-group-item-action" data-bs-toggle="list">Scheduler</a>
+            <a href="#notifications" class="list-group-item list-group-item-action" data-bs-toggle="list">Notifications</a>
+            <a href="#system" class="list-group-item list-group-item-action" data-bs-toggle="list">System</a>
+        </div>
+    </div>
+    <div class="col-md-9">
+        <div class="tab-content">
+            <!-- Trading Parameters -->
+            <div class="tab-pane fade show active" id="trading-params">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Trading Parameters</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="trading-params-form">
+                          <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="initial-balance" class="form-label">Initial Balance</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" class="form-control" id="initial-balance" name="DEFAULT_INITIAL_BALANCE" value="100000">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="window-size" class="form-label">Window Size</label>
+                                <input type="number" class="form-control" id="window-size" name="WINDOW_SIZE" value="20">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="swing-trading" name="SWING_TRADING_MODE" checked>
+                            <label class="form-check-label" for="swing-trading">Swing Trading Mode</label>
+                            <small class="form-text text-muted d-block">Hold positions longer for bigger profits</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="market-regime" name="USE_MARKET_REGIME" checked>
+                            <label class="form-check-label" for="market-regime">Use Market Regime Detection</label>
+                            <small class="form-text text-muted d-block">Adapt strategy based on market conditions</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="bollinger-breakouts" name="USE_BOLLINGER_BREAKOUTS" checked>
+                            <label class="form-check-label" for="bollinger-breakouts">Use Bollinger Breakouts</label>
+                            <small class="form-text text-muted d-block">Enter trades on Bollinger Band breakouts</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rsi-filter" name="USE_RSI_FILTER" checked>
+                            <label class="form-check-label" for="rsi-filter">Use RSI Filter</label>
+                            <small class="form-text text-muted d-block">Filter trades using RSI indicator</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="volume-filter" name="USE_VOLUME_FILTER" checked>
+                            <label class="form-check-label" for="volume-filter">Use Volume Filter</label>
+                            <small class="form-text text-muted d-block">Confirm entries with volume</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="profit-trailing" name="USE_PROFIT_TRAILING" checked>
+                            <label class="form-check-label" for="profit-trailing">Use Profit Trailing</label>
+                            <small class="form-text text-muted d-block">Use trailing stops for profits</small>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="multiple-timeframes" name="USE_MULTIPLE_TIMEFRAMES" checked>
+                            <label class="form-check-label" for="multiple-timeframes">Use Multiple Timeframes</label>
+                            <small class="form-text text-muted d-block">Analyze multiple timeframes</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Risk Management -->
+        <div class="tab-pane fade" id="risk-management">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Risk Management</h5>
+                </div>
+                <div class="card-body">
+                    <form id="risk-management-form">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="max-position-size" class="form-label">Max Position Size (%)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="max-position-size" name="MAX_POSITION_SIZE_PCT" value="0.40" step="0.01" min="0.01" max="1.00">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="form-text text-muted">Maximum position size as percentage of balance</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="max-open-positions" class="form-label">Max Open Positions</label>
+                                <input type="number" class="form-control" id="max-open-positions" name="MAX_OPEN_POSITIONS" value="8" min="1" max="20">
+                                <small class="form-text text-muted">Maximum number of open positions at once</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="max-trades-per-day" class="form-label">Max Trades Per Day</label>
+                                <input type="number" class="form-control" id="max-trades-per-day" name="MAX_TRADES_PER_DAY" value="10" min="1" max="50">
+                                <small class="form-text text-muted">Maximum number of trades per day</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="daily-loss-limit" class="form-label">Daily Loss Limit (%)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="daily-loss-limit" name="DAILY_LOSS_LIMIT_PCT" value="0.035" step="0.001" min="0.001" max="0.10">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="form-text text-muted">Stop trading if daily loss exceeds this limit</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="daily-profit-target" class="form-label">Daily Profit Target (%)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="daily-profit-target" name="DAILY_PROFIT_TARGET_PCT" value="0.10" step="0.01" min="0.01" max="0.50">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="form-text text-muted">Stop trading if daily profit exceeds this target</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="max-drawdown" class="form-label">Max Drawdown Allowed (%)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="max-drawdown" name="MAX_DRAWDOWN_ALLOWED" value="0.15" step="0.01" min="0.05" max="0.50">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="form-text text-muted">Reduce position size if drawdown exceeds this limit</small>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trading Symbols -->
+        <div class="tab-pane fade" id="symbols">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Trading Symbols</h5>
+                </div>
+                <div class="card-body">
+                    <form id="symbols-form">
+                        <div class="mb-3">
+                            <label for="symbols-list" class="form-label">Symbols List</label>
+                            <textarea class="form-control" id="symbols-list" name="SYMBOLS" rows="5">ASIANPAINT,BAJFINANCE</textarea>
+                            <small class="form-text text-muted">Comma-separated list of trading symbols</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-secondary" id="fetch-symbols">Fetch Available Symbols</button>
+                            <button type="button" class="btn btn-secondary" id="test-symbols">Test Symbols</button>
+                        </div>
+                        
+                        <div class="alert alert-info" id="symbols-status" style="display: none;"></div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scheduler -->
+        <div class="tab-pane fade" id="scheduler">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Scheduler</h5>
+                </div>
+                <div class="card-body">
+                    <form id="scheduler-form">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="data-update-interval" class="form-label">Data Update Interval (seconds)</label>
+                                <input type="number" class="form-control" id="data-update-interval" name="DATA_UPDATE_INTERVAL" value="60" min="10" max="300">
+                                <small class="form-text text-muted">Interval for updating market data</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="trading-decision-interval" class="form-label">Trading Decision Interval (seconds)</label>
+                                <input type="number" class="form-control" id="trading-decision-interval" name="TRADING_DECISION_INTERVAL" value="300" min="60" max="900">
+                                <small class="form-text text-muted">Interval for making trading decisions</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="position-check-interval" class="form-label">Position Check Interval (seconds)</label>
+                                <input type="number" class="form-control" id="position-check-interval" name="POSITION_CHECK_INTERVAL" value="60" min="10" max="300">
+                                <small class="form-text text-muted">Interval for checking positions</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="timezone" class="form-label">Timezone</label>
+                                <select class="form-select" id="timezone" name="TIMEZONE">
+                                    <option value="Asia/Kolkata" selected>Asia/Kolkata</option>
+                                    <option value="Asia/Singapore">Asia/Singapore</option>
+                                    <option value="Asia/Dubai">Asia/Dubai</option>
+                                    <option value="Europe/London">Europe/London</option>
+                                    <option value="America/New_York">America/New_York</option>
+                                </select>
+                                <small class="form-text text-muted">Timezone for scheduling</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="market-open-hour" class="form-label">Market Open Hour</label>
+                                <input type="number" class="form-control" id="market-open-hour" name="MARKET_OPEN_HOUR" value="9" min="0" max="23">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="market-open-minute" class="form-label">Market Open Minute</label>
+                                <input type="number" class="form-control" id="market-open-minute" name="MARKET_OPEN_MINUTE" value="15" min="0" max="59">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="market-close-hour" class="form-label">Market Close Hour</label>
+                                <input type="number" class="form-control" id="market-close-hour" name="MARKET_CLOSE_HOUR" value="15" min="0" max="23">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="market-close-minute" class="form-label">Market Close Minute</label>
+                                <input type="number" class="form-control" id="market-close-minute" name="MARKET_CLOSE_MINUTE" value="30" min="0" max="59">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="avoid-first-minutes" class="form-label">Avoid First Minutes</label>
+                                <input type="number" class="form-control" id="avoid-first-minutes" name="AVOID_FIRST_MINUTES" value="15" min="0" max="60">
+                                <small class="form-text text-muted">Avoid trading in first N minutes after market open</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="avoid-last-minutes" class="form-label">Avoid Last Minutes</label>
+                                <input type="number" class="form-control" id="avoid-last-minutes" name="AVOID_LAST_MINUTES" value="15" min="0" max="60">
+                                <small class="form-text text-muted">Avoid trading in last N minutes before market close</small>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notifications -->
+        <div class="tab-pane fade" id="notifications">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <form id="notifications-form">
+                        <!-- Email Notifications -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="enable-email" name="ENABLE_EMAIL_NOTIFICATIONS">
+                            <label class="form-check-label" for="enable-email">Enable Email Notifications</label>
+                        </div>
+                        
+                        <div id="email-settings" class="mb-4">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="email-server" class="form-label">Email Server</label>
+                                    <input type="text" class="form-control" id="email-server" name="EMAIL_SERVER" value="smtp.gmail.com">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email-port" class="form-label">Email Port</label>
+                                    <input type="number" class="form-control" id="email-port" name="EMAIL_PORT" value="587">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="email-use-tls" name="EMAIL_USE_TLS" checked>
+                                <label class="form-check-label" for="email-use-tls">Use TLS</label>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="email-username" class="form-label">Email Username</label>
+                                    <input type="email" class="form-control" id="email-username" name="EMAIL_USERNAME" value="">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email-password" class="form-label">Email Password</label>
+                                    <input type="password" class="form-control" id="email-password" name="EMAIL_PASSWORD" value="">
+                                    <small class="form-text text-muted">For Gmail, use App Password</small>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email-recipients" class="form-label">Email Recipients</label>
+                                <input type="text" class="form-control" id="email-recipients" name="EMAIL_RECIPIENTS" value="">
+                                <small class="form-text text-muted">Comma-separated list of email addresses</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-secondary" id="test-email">Test Email</button>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Telegram Notifications -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="enable-telegram" name="ENABLE_TELEGRAM_NOTIFICATIONS">
+                            <label class="form-check-label" for="enable-telegram">Enable Telegram Notifications</label>
+                        </div>
+                        
+                        <div id="telegram-settings" class="mb-4">
+                            <div class="mb-3">
+                                <label for="telegram-bot-token" class="form-label">Telegram Bot Token</label>
+                                <input type="text" class="form-control" id="telegram-bot-token" name="TELEGRAM_BOT_TOKEN" value="">
+                                <small class="form-text text-muted">Token from BotFather</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="telegram-chat-id" class="form-label">Telegram Chat ID</label>
+                                <input type="text" class="form-control" id="telegram-chat-id" name="TELEGRAM_CHAT_ID" value="">
+                                <small class="form-text text-muted">Chat ID to send messages to</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-secondary" id="test-telegram">Test Telegram</button>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System -->
+        <div class="tab-pane fade" id="system">
+            <div class="card">
+                <div class="card-header">
+                    <h5>System</h5>
+                </div>
+                <div class="card-body">
+                    <form id="system-form">
+                        <div class="mb-3">
+                            <label for="log-level" class="form-label">Log Level</label>
+                            <select class="form-select" id="log-level" name="LOG_LEVEL">
+                                <option value="DEBUG">DEBUG</option>
+                                <option value="INFO" selected>INFO</option>
+                                <option value="WARNING">WARNING</option>
+                                <option value="ERROR">ERROR</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="api-port" class="form-label">API Port</label>
+                            <input type="number" class="form-control" id="api-port" name="API_PORT" value="5000" min="1024" max="65535">
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="debug-mode" name="DEBUG_MODE">
+                            <label class="form-check-label" for="debug-mode">Debug Mode</label>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-success" id="start-bot">Start Trading Bot</button>
+                            <button type="button" class="btn btn-danger" id="stop-bot">Stop Trading Bot</button>
+                            <button type="button" class="btn btn-warning" id="restart-bot">Restart Trading Bot</button>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-secondary" id="backup-db">Backup Database</button>
+                            <button type="button" class="btn btn-secondary" id="view-logs">View Logs</button>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="mb-3">
+                            <h6>System Information</h6>
+                            <dl class="row">
+                                <dt class="col-sm-3">Version</dt>
+                                <dd class="col-sm-9" id="system-version">1.0.0</dd>
+                                
+                                <dt class="col-sm-3">Status</dt>
+                                <dd class="col-sm-9" id="system-status">Running</dd>
+                                
+                                <dt class="col-sm-3">Uptime</dt>
+                                <dd class="col-sm-9" id="system-uptime">1d 2h 30m</dd>
+                                
+                                <dt class="col-sm-3">CPU Usage</dt>
+                                <dd class="col-sm-9" id="system-cpu">10%</dd>
+                                
+                                <dt class="col-sm-3">Memory Usage</dt>
+                                <dd class="col-sm-9" id="system-memory">256 MB</dd>
+                                
+                                <dt class="col-sm-3">Database Size</dt>
+                                <dd class="col-sm-9" id="system-db-size">5 MB</dd>
+                            </dl>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load current settings
+    fetchSettings();
+    
+    // Set up form submit handlers
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveSettings(this);
+        });
+    });
+    
+    // Set up test button handlers
+    document.getElementById('test-email').addEventListener('click', testEmail);
+    document.getElementById('test-telegram').addEventListener('click', testTelegram);
+    document.getElementById('test-symbols').addEventListener('click', testSymbols);
+    document.getElementById('fetch-symbols').addEventListener('click', fetchSymbols);
+    
+    // Set up system action handlers
+    document.getElementById('start-bot').addEventListener('click', startBot);
+    document.getElementById('stop-bot').addEventListener('click', stopBot);
+    document.getElementById('restart-bot').addEventListener('click', restartBot);
+    document.getElementById('backup-db').addEventListener('click', backupDb);
+    document.getElementById('view-logs').addEventListener('click', viewLogs);
+    
+    // Set up conditional display for notification settings
+    document.getElementById('enable-email').addEventListener('change', function() {
+        document.getElementById('email-settings').style.display = this.checked ? 'block' : 'none';
+    });
+    
+    document.getElementById('enable-telegram').addEventListener('change', function() {
+        document.getElementById('telegram-settings').style.display = this.checked ? 'block' : 'none';
+    });
+    
+    // Update system information
+    fetchSystemInfo();
+    setInterval(fetchSystemInfo, 60000); // Update every minute
+});
+
+// Function to fetch current settings
+function fetchSettings() {
+    fetch('/api/settings')
+        .then(response => response.json())
+        .then(data => {
+            // Populate form fields with current settings
+            for (const [key, value] of Object.entries(data)) {
+                const element = document.querySelector(`[name="${key}"]`);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = value === true || value === 'true';
+                    } else {
+                        element.value = value;
+                    }
+                }
+            }
+            
+            // Handle conditional displays
+            document.getElementById('email-settings').style.display = 
+                document.getElementById('enable-email').checked ? 'block' : 'none';
+            document.getElementById('telegram-settings').style.display = 
+                document.getElementById('enable-telegram').checked ? 'block' : 'none';
+        })
+        .catch(error => {
+            console.error('Error fetching settings:', error);
+            alert('Failed to load settings. Please try again.');
+        });
+}
+
+// More JavaScript functions would go here
+</script>
+{% endblock %}

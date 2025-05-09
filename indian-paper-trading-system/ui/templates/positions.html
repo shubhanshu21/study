@@ -1,0 +1,471 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Row -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-chart-pie me-2"></i>Positions</h2>
+                <p class="text-muted">Manage your open positions</p>
+            </div>
+            <div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#buyModal">
+                    <i class="fas fa-plus me-1"></i> New Position
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Positions Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card metric-card h-100">
+                <div class="card-body">
+                    <div class="metric-title">Total Positions</div>
+                    <div class="metric-value">{{ positions|length }}</div>
+                    <div class="small text-muted">Max: {{ max_positions }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card h-100">
+                <div class="card-body">
+                    <div class="metric-title">Position Value</div>
+                    <div class="metric-value">₹{{ total_position_value|format_number }}</div>
+                    <div class="small text-muted">{{ position_ratio|format_percent }} of Portfolio</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card h-100">
+                <div class="card-body">
+                    <div class="metric-title">Unrealized P&L</div>
+                    <div class="metric-value {% if total_unrealized_pnl > 0 %}profit{% elif total_unrealized_pnl < 0 %}loss{% endif %}">
+                        ₹{{ total_unrealized_pnl|format_number }}
+                    </div>
+                    <div class="small text-muted">
+                        {% if total_unrealized_pnl > 0 %}
+                        <span class="profit"><i class="fas fa-caret-up"></i> {{ total_unrealized_pnl_pct|format_percent }}</span>
+                        {% else %}
+                        <span class="loss"><i class="fas fa-caret-down"></i> {{ total_unrealized_pnl_pct|abs|format_percent }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card h-100">
+                <div class="card-body">
+                    <div class="metric-title">Cash Available</div>
+                    <div class="metric-value">₹{{ cash_balance|format_number }}</div>
+                    <div class="small text-muted">{{ cash_ratio|format_percent }} of Portfolio</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Position Details -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>Position Details</div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary refresh-btn">
+                                <i class="fas fa-sync-alt me-1"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if positions %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover positions-table">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Quantity</th>
+                                    <th>Avg Price</th>
+                                    <th>Current Price</th>
+                                    <th>Value</th>
+                                    <th>P&L</th>
+                                    <th>P&L %</th>
+                                    <th>Days</th>
+                                    <th>Stop Loss</th>
+                                    <th>Target</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for position in positions %}
+                                <tr>
+                                    <td><strong>{{ position.symbol }}</strong></td>
+                                    <td>{{ position.quantity }}</td>
+                                    <td>₹{{ position.avg_price|format_number }}</td>
+                                    <td>₹{{ position.current_price|format_number }}</td>
+                                    <td>₹{{ position.value|format_number }}</td>
+                                    <td class="{% if position.unrealized_pnl > 0 %}profit{% elif position.unrealized_pnl < 0 %}loss{% endif %}">
+                                        ₹{{ position.unrealized_pnl|format_number }}
+                                    </td>
+                                    <td class="{% if position.unrealized_pnl_pct > 0 %}profit{% elif position.unrealized_pnl_pct < 0 %}loss{% endif %}">
+                                        {{ position.unrealized_pnl_pct|format_percent }}
+                                    </td>
+                                    <td>{{ position.days_held }}</td>
+                                    <td>
+                                        {% if position.stop_loss %}
+                                        <span class="loss">₹{{ position.stop_loss|format_number }}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if position.target %}
+                                        <span class="profit">₹{{ position.target|format_number }}</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="/charts/{{ position.symbol }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-chart-line"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-primary edit-stop-btn" 
+                                                    data-symbol="{{ position.symbol }}"
+                                                    data-stop="{{ position.stop_loss }}"
+                                                    data-target="{{ position.target }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger sell-btn" 
+                                                    data-symbol="{{ position.symbol }}" 
+                                                    data-quantity="{{ position.quantity }}">
+                                                <i class="fas fa-sign-out-alt"></i> Sell
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-info-circle text-muted mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted">No open positions</h5>
+                        <p class="text-muted">Click "New Position" to add a position</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Buy Modal -->
+<div class="modal fade" id="buyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Position</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="buyForm">
+                    <div class="mb-3">
+                        <label for="buySymbol" class="form-label">Symbol</label>
+                        <select class="form-select" id="buySymbol" required>
+                            <option value="" selected disabled>Select a symbol</option>
+                            {% for symbol in available_symbols %}
+                            <option value="{{ symbol }}">{{ symbol }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="buyQuantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="buyQuantity" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="buyPrice" class="form-label">Price (Leave blank for market price)</label>
+                        <input type="number" class="form-control" id="buyPrice" step="0.01" placeholder="Market Price">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="buyStopLoss" class="form-label">Stop Loss (Optional)</label>
+                                <input type="number" class="form-control" id="buyStopLoss" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="buyTarget" class="form-label">Target (Optional)</label>
+                                <input type="number" class="form-control" id="buyTarget" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="positionSizePct" class="form-label">Position Size</label>
+                        <select class="form-select" id="positionSizePct">
+                            <option value="0.05">5% of Available Cash</option>
+                            <option value="0.10">10% of Available Cash</option>
+                            <option value="0.25" selected>25% of Available Cash</option>
+                            <option value="0.50">50% of Available Cash</option>
+                            <option value="0.75">75% of Available Cash</option>
+                            <option value="1.00">100% of Available Cash</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmBuy">Buy</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sell Modal -->
+<div class="modal fade" id="sellModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sell Position</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="sellForm">
+                    <div class="mb-3">
+                        <label for="sellSymbol" class="form-label">Symbol</label>
+                        <input type="text" class="form-control" id="sellSymbol" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sellQuantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="sellQuantity" min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="sellPrice" class="form-label">Price (Leave blank for market price)</label>
+                        <input type="number" class="form-control" id="sellPrice" step="0.01" placeholder="Market Price">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="sellAll" checked>
+                        <label class="form-check-label" for="sellAll">
+                            Sell entire position
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmSell">Sell</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Stop/Target Modal -->
+<div class="modal fade" id="editStopModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Stop Loss & Target</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editStopForm">
+                    <input type="hidden" id="editSymbol">
+                    <div class="mb-3">
+                        <label for="editStopLoss" class="form-label">Stop Loss</label>
+                        <input type="number" class="form-control" id="editStopLoss" step="0.01">
+                        <div class="form-text text-muted">Leave blank to remove stop loss</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTarget" class="form-label">Target</label>
+                        <input type="number" class="form-control" id="editTarget" step="0.01">
+                        <div class="form-text text-muted">Leave blank to remove target</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmEdit">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Handle buy form submission
+        $('#confirmBuy').click(function() {
+            const symbol = $('#buySymbol').val();
+            const quantity = $('#buyQuantity').val();
+            const price = $('#buyPrice').val() || null;
+            const stopLoss = $('#buyStopLoss').val() || null;
+            const target = $('#buyTarget').val() || null;
+            
+            if (!symbol || !quantity) {
+                alert('Symbol and quantity are required');
+                return;
+            }
+            
+            // Submit buy order via API
+            $.ajax({
+                url: '/api/place_order',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    symbol: symbol,
+                    order_type: 'BUY',
+                    quantity: parseInt(quantity),
+                    price: price ? parseFloat(price) : null,
+                    stop_loss: stopLoss ? parseFloat(stopLoss) : null,
+                    target: target ? parseFloat(target) : null
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        alert('Buy order placed successfully');
+                        location.reload();
+                    } else {
+                        alert('Error placing buy order: ' + response.error);
+                    }
+                },
+                error: function() {
+                    alert('Error communicating with server');
+                }
+            });
+            
+            const buyModal = bootstrap.Modal.getInstance(document.getElementById('buyModal'));
+            buyModal.hide();
+        });
+        
+        // Handle sell button clicks
+        $('.sell-btn').click(function() {
+            const symbol = $(this).data('symbol');
+            const quantity = $(this).data('quantity');
+            
+            $('#sellSymbol').val(symbol);
+            $('#sellQuantity').val(quantity);
+            $('#sellQuantity').attr('max', quantity);
+            $('#sellAll').prop('checked', true);
+            $('#sellPrice').val('');
+            
+            const sellModal = new bootstrap.Modal(document.getElementById('sellModal'));
+            sellModal.show();
+        });
+        
+        // Handle sell all checkbox
+        $('#sellAll').change(function() {
+            if ($(this).is(':checked')) {
+                const maxQty = $('#sellQuantity').attr('max');
+                $('#sellQuantity').val(maxQty);
+                $('#sellQuantity').prop('disabled', true);
+            } else {
+                $('#sellQuantity').prop('disabled', false);
+            }
+        });
+        
+        // Handle confirm sell button
+        $('#confirmSell').click(function() {
+            const symbol = $('#sellSymbol').val();
+            const quantity = $('#sellQuantity').val();
+            const price = $('#sellPrice').val() || null;
+            
+            // Submit sell order via API
+            $.ajax({
+                url: '/api/place_order',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    symbol: symbol,
+                    order_type: 'SELL',
+                    quantity: parseInt(quantity),
+                    price: price ? parseFloat(price) : null
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        alert('Sell order placed successfully');
+                        location.reload();
+                    } else {
+                        alert('Error placing sell order: ' + response.error);
+                    }
+                },
+                error: function() {
+                    alert('Error communicating with server');
+                }
+            });
+            
+            const sellModal = bootstrap.Modal.getInstance(document.getElementById('sellModal'));
+            sellModal.hide();
+        });
+        
+        // Handle edit stop/target button clicks
+        $('.edit-stop-btn').click(function() {
+            const symbol = $(this).data('symbol');
+            const stopLoss = $(this).data('stop');
+            const target = $(this).data('target');
+            
+            $('#editSymbol').val(symbol);
+            $('#editStopLoss').val(stopLoss || '');
+            $('#editTarget').val(target || '');
+            
+            const editStopModal = new bootstrap.Modal(document.getElementById('editStopModal'));
+            editStopModal.show();
+        });
+        
+        // Handle confirm edit button
+        $('#confirmEdit').click(function() {
+            const symbol = $('#editSymbol').val();
+            const stopLoss = $('#editStopLoss').val() || null;
+            const target = $('#editTarget').val() || null;
+            
+            // Submit edit request via API
+            $.ajax({
+                url: '/api/update_position',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    symbol: symbol,
+                    stop_loss: stopLoss ? parseFloat(stopLoss) : null,
+                    target: target ? parseFloat(target) : null
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        alert('Position updated successfully');
+                        location.reload();
+                    } else {
+                        alert('Error updating position: ' + response.error);
+                    }
+                },
+                error: function() {
+                    alert('Error communicating with server');
+                }
+            });
+            
+            const editStopModal = bootstrap.Modal.getInstance(document.getElementById('editStopModal'));
+            editStopModal.hide();
+        });
+        
+        // Position size calculator for buy form
+        $('#positionSizePct, #buyPrice').change(function() {
+            const availableCash = {{ cash_balance }};
+            const positionSizePct = parseFloat($('#positionSizePct').val());
+            const price = parseFloat($('#buyPrice').val());
+            
+            if (!isNaN(price) && !isNaN(positionSizePct)) {
+                const positionValue = availableCash * positionSizePct;
+                const quantity = Math.floor(positionValue / price);
+                
+                $('#buyQuantity').val(quantity);
+            }
+        });
+        
+        // Refresh button functionality
+        $('.refresh-btn').click(function() {
+            location.reload();
+        });
+    });
+</script>
+{% endblock %}

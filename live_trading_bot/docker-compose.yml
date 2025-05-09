@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  trading_bot:
+    build: .
+    container_name: rl_trading_bot
+    volumes:
+      - ./logs:/app/logs
+      - ./models:/app/models/saved
+      - ./db:/app/db
+      - ./data:/app/data
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Kolkata
+
+  web_dashboard:
+    build: ./web
+    container_name: rl_trading_dashboard
+    volumes:
+      - ./web:/app
+    ports:
+      - "8080:80"
+    depends_on:
+      - trading_bot
+    restart: unless-stopped

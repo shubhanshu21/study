@@ -1,0 +1,60 @@
+2025-05-05 19:28:08 - root - INFO - Starting RL Trading Bot in paper mode
+2025-05-05 19:28:08 - services.notifications - INFO - Notification service initialized. Email: False, Telegram: False
+2025-05-05 19:28:08 - trading.zerodha_broker - INFO - Running in paper trading mode, no real authentication required
+2025-05-05 19:28:08 - root - INFO - Successfully authenticated with Zerodha
+2025-05-05 19:28:08 - data.data_loader - INFO - Initialized data loader for 2 symbols
+2025-05-05 19:28:08 - models.model_factory - INFO - Model factory initialized with directory: /var/www/html/python/rl_trading_bot/models/saved
+2025-05-05 19:28:08 - models.model_factory - ERROR - Model file not found for ASIANPAINT: /var/www/html/python/rl_trading_bot/models/saved/ppo_ASIANPAINT.zip
+2025-05-05 19:28:08 - trading.zerodha_broker - ERROR - Error getting historical data for ASIANPAINT: Invalid `api_key` or `access_token`.
+2025-05-05 19:28:08 - data.data_loader - WARNING - No historical data found for ASIANPAINT
+2025-05-05 19:28:08 - trading.strategy - ERROR - Could not initialize data for ASIANPAINT
+2025-05-05 19:28:08 - trading.strategy - INFO - Initialized RL trading strategy for ASIANPAINT
+2025-05-05 19:28:08 - root - INFO - Loaded model for ASIANPAINT
+2025-05-05 19:28:08 - models.model_factory - ERROR - Model file not found for BAJFINANCE: /var/www/html/python/rl_trading_bot/models/saved/ppo_BAJFINANCE.zip
+2025-05-05 19:28:09 - trading.zerodha_broker - ERROR - Error getting historical data for BAJFINANCE: Invalid `api_key` or `access_token`.
+2025-05-05 19:28:09 - data.data_loader - WARNING - No historical data found for BAJFINANCE
+2025-05-05 19:28:09 - trading.strategy - ERROR - Could not initialize data for BAJFINANCE
+2025-05-05 19:28:09 - trading.strategy - INFO - Initialized RL trading strategy for BAJFINANCE
+2025-05-05 19:28:09 - root - INFO - Loaded model for BAJFINANCE
+2025-05-05 19:28:09 - services.scheduler - INFO - Trading schedule initialized
+2025-05-05 19:28:09 - services.scheduler - INFO - Initialized trading scheduler with 2 symbols
+2025-05-05 19:28:09 - services.scheduler - INFO - Starting scheduler
+2025-05-05 19:28:09 - services.scheduler - INFO - Starting scheduler loop
+2025-05-05 19:28:09 - services.notifications - INFO - ALERT: Trading Bot Started
+Trading bot started at 2025-05-06 00:58:09
+2025-05-05 19:28:42 - root - INFO - Received shutdown signal
+2025-05-05 19:28:42 - services.scheduler - INFO - Stopping scheduler
+2025-05-05 19:28:43 - services.notifications - INFO - ALERT: Trading Bot Stopped
+Trading bot stopped at 2025-05-06 00:58:43
+2025-05-05 19:28:43 - trading.zerodha_broker - INFO - Logging out from paper mode
+2025-05-05 19:28:43 - root - INFO - Trading service stopped
+2025-05-05 20:05:46 - root - INFO - Starting RL Trading Bot in paper mode
+2025-05-05 20:05:46 - services.notifications - INFO - Notification service initialized. Email: False, Telegram: False
+2025-05-05 20:05:46 - trading.zerodha_broker - INFO - Running in paper trading mode, no real authentication required
+2025-05-05 20:05:46 - root - INFO - Successfully authenticated with Zerodha
+2025-05-05 20:05:46 - data.data_loader - INFO - Initialized data loader for 2 symbols
+2025-05-05 20:05:46 - models.model_factory - INFO - Model factory initialized with directory: /var/www/html/python/rl_trading_bot/models/saved
+2025-05-05 20:05:46 - models.model_factory - ERROR - Model file not found for ASIANPAINT: /var/www/html/python/rl_trading_bot/models/saved/ppo_ASIANPAINT.zip
+2025-05-05 20:05:46 - trading.zerodha_broker - ERROR - Error getting historical data for ASIANPAINT: Invalid `api_key` or `access_token`.
+2025-05-05 20:05:46 - data.data_loader - WARNING - No historical data found for ASIANPAINT
+2025-05-05 20:05:46 - trading.strategy - ERROR - Could not initialize data for ASIANPAINT
+2025-05-05 20:05:46 - trading.strategy - INFO - Initialized RL trading strategy for ASIANPAINT
+2025-05-05 20:05:46 - root - INFO - Loaded model for ASIANPAINT
+2025-05-05 20:05:46 - models.model_factory - ERROR - Model file not found for BAJFINANCE: /var/www/html/python/rl_trading_bot/models/saved/ppo_BAJFINANCE.zip
+2025-05-05 20:05:47 - trading.zerodha_broker - ERROR - Error getting historical data for BAJFINANCE: Invalid `api_key` or `access_token`.
+2025-05-05 20:05:47 - data.data_loader - WARNING - No historical data found for BAJFINANCE
+2025-05-05 20:05:47 - trading.strategy - ERROR - Could not initialize data for BAJFINANCE
+2025-05-05 20:05:47 - trading.strategy - INFO - Initialized RL trading strategy for BAJFINANCE
+2025-05-05 20:05:47 - root - INFO - Loaded model for BAJFINANCE
+2025-05-05 20:05:47 - services.scheduler - INFO - Trading schedule initialized
+2025-05-05 20:05:47 - services.scheduler - INFO - Initialized trading scheduler with 2 symbols
+2025-05-05 20:05:47 - services.scheduler - INFO - Starting scheduler
+2025-05-05 20:05:47 - services.scheduler - INFO - Starting scheduler loop
+2025-05-05 20:05:47 - services.notifications - INFO - ALERT: Trading Bot Started
+Trading bot started at 2025-05-06 01:35:47
+2025-05-05 20:05:50 - root - INFO - Received shutdown signal
+2025-05-05 20:05:50 - services.scheduler - INFO - Stopping scheduler
+2025-05-05 20:05:51 - services.notifications - INFO - ALERT: Trading Bot Stopped
+Trading bot stopped at 2025-05-06 01:35:51
+2025-05-05 20:05:51 - trading.zerodha_broker - INFO - Logging out from paper mode
+2025-05-05 20:05:51 - root - INFO - Trading service stopped

@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+datasets/
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Logs
+logs/
+*.log
+
+# Models
+models/*.zip
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*.ipynb
+
+# VS Code
+.vscode/
+
+# Environment variables
+.env
+
+# Tensorboard
+logs/tensorboard/
+
+# Data
+data/

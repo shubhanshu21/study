@@ -1,0 +1,509 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Row -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-chart-line me-2"></i>Performance</h2>
+                <p class="text-muted">Trading performance metrics and analysis</p>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="timeframeDropdown" data-bs-toggle="dropdown">
+                    <i class="fas fa-calendar-alt me-1"></i> {{ current_timeframe }}
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="?timeframe=today">Today</a></li>
+                    <li><a class="dropdown-item" href="?timeframe=week">This Week</a></li>
+                    <li><a class="dropdown-item" href="?timeframe=month">This Month</a></li>
+                    <li><a class="dropdown-item" href="?timeframe=quarter">This Quarter</a></li>
+                    <li><a class="dropdown-item" href="?timeframe=year">This Year</a></li>
+                    <li><a class="dropdown-item" href="?timeframe=all">All Time</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card metric-card h-100">
+                <div class="card-body">
+                    <div class="metric-title">Total Return</div>
+                    <div class="metric-value {% if total_return > 0 %}profit{% elif total_return < 0 %}loss{% endif %}">
+                        {{ total_return|format_percent }}
+                    </div>
+                    <div class="small text-muted">
+                        Initial: ₹{{ initial_balance|format_number }}
+                        Current: ₹{{ current_balance|format_number }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card h-100">
+                <div class="card-body">
+                    <div class="metric-title">Win Rate</div>
+                    <div class="metric-value">{{ win_rate|format_percent }}</div>
+                    <div class="small text-muted">{{ win_count }}/{{ total_trades }} Winning Trades</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card h-100">
+                <div class="card-body">
+                    <div class="metric-title">Profit Factor</div>
+                    <div class="metric-value">{{ profit_factor|format_number }}</div>
+                    <div class="small text-muted">
+                        Profit: ₹{{ total_profit|format_number }}
+                        Loss: ₹{{ total_loss|format_number }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card metric-card h-100">
+                <div class="card-body">
+                    <div class="metric-title">Max Drawdown</div>
+                    <div class="metric-value loss">{{ max_drawdown|format_percent }}</div>
+                    <div class="small text-muted">Recovery Factor: {{ recovery_factor|format_number }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">Return Metrics</div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td>Annualized Return</td>
+                                <td class="{% if annualized_return > 0 %}profit{% elif annualized_return < 0 %}loss{% endif %}">
+                                    {{ annualized_return|format_percent }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sharpe Ratio</td>
+                                <td>{{ sharpe_ratio|format_number }}</td>
+                            </tr>
+                            <tr>
+                                <td>Calmar Ratio</td>
+                                <td>{{ calmar_ratio|format_number }}</td>
+                            </tr>
+                            <tr>
+                                <td>Average Daily Return</td>
+                                <td class="{% if avg_daily_return > 0 %}profit{% elif avg_daily_return < 0 %}loss{% endif %}">
+                                    {{ avg_daily_return|format_percent }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Best Day</td>
+                                <td class="profit">{{ best_day_return|format_percent }}</td>
+                            </tr>
+                            <tr>
+                                <td>Worst Day</td>
+                                <td class="loss">{{ worst_day_return|format_percent }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">Trade Metrics</div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td>Total Trades</td>
+                                <td>{{ total_trades }}</td>
+                            </tr>
+                            <tr>
+                                <td>Winning Trades</td>
+                                <td>{{ win_count }} ({{ win_rate|format_percent }})</td>
+                            </tr>
+                            <tr>
+                                <td>Losing Trades</td>
+                                <td>{{ loss_count }} ({{ (1 - win_rate)|format_percent }})</td>
+                            </tr>
+                            <tr>
+                                <td>Average Win</td>
+                                <td class="profit">₹{{ avg_win|format_number }}</td>
+                            </tr>
+                            <tr>
+                                <td>Average Loss</td>
+                                <td class="loss">₹{{ avg_loss|format_number }}</td>
+                            </tr>
+                            <tr>
+                                <td>Win/Loss Ratio</td>
+                                <td>{{ win_loss_ratio|format_number }}:1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">Risk Metrics</div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td>Max Drawdown</td>
+                                <td class="loss">{{ max_drawdown|format_percent }}</td>
+                            </tr>
+                            <tr>
+                                <td>Average Drawdown</td>
+                                <td class="loss">{{ avg_drawdown|format_percent }}</td>
+                            </tr>
+                            <tr>
+                                <td>Drawdown Duration</td>
+                                <td>{{ drawdown_duration }} days</td>
+                            </tr>
+                            <tr>
+                                <td>Standard Deviation</td>
+                                <td>{{ std_dev|format_percent }}</td>
+                            </tr>
+                            <tr>
+                                <td>Avg Holding Period</td>
+                                <td>{{ avg_holding_period }} days</td>
+                            </tr>
+                            <tr>
+                                <td>Market Correlation</td>
+                                <td>{{ market_correlation|format_number }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Equity Curve</div>
+                <div class="card-body">
+                    <div id="equity-chart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Drawdown</div>
+                <div class="card-body">
+                    <div id="drawdown-chart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance By Symbol and Trading Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Performance By Symbol</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Trades</th>
+                                    <th>Win Rate</th>
+                                    <th>P&L</th>
+                                    <th>Return</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for symbol in symbol_performance %}
+                                <tr>
+                                    <td>{{ symbol.symbol }}</td>
+                                    <td>{{ symbol.trades }}</td>
+                                    <td>{{ symbol.win_rate|format_percent }}</td>
+                                    <td class="{% if symbol.pnl > 0 %}profit{% elif symbol.pnl < 0 %}loss{% endif %}">
+                                        ₹{{ symbol.pnl|format_number }}
+                                    </td>
+                                    <td class="{% if symbol.return > 0 %}profit{% elif symbol.return < 0 %}loss{% endif %}">
+                                        {{ symbol.return|format_percent }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Trading Statistics</div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div id="win-loss-pie" style="height: 250px;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="pnl-distribution" style="height: 250px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Trades -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>Recent Trades</div>
+                    <a href="/trades" class="btn btn-sm btn-outline-primary">View All Trades</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_trades %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Symbol</th>
+                                    <th>Action</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Value</th>
+                                    <th>P&L</th>
+                                    <th>P&L %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in recent_trades %}
+                                <tr>
+                                    <td>{{ trade.date }} {{ trade.time }}</td>
+                                    <td>{{ trade.symbol }}</td>
+                                    <td class="{% if trade.action == 'BUY' %}profit{% elif trade.action == 'SELL' %}loss{% endif %}">
+                                        {{ trade.action }}
+                                    </td>
+                                    <td>{{ trade.quantity }}</td>
+                                    <td>₹{{ trade.price|format_number }}</td>
+                                    <td>₹{{ trade.value|format_number }}</td>
+                                    <td class="{% if trade.pnl > 0 %}profit{% elif trade.pnl < 0 %}loss{% endif %}">
+                                        {% if trade.action == 'SELL' %}
+                                        ₹{{ trade.pnl|format_number }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td class="{% if trade.pnl_pct > 0 %}profit{% elif trade.pnl_pct < 0 %}loss{% endif %}">
+                                        {% if trade.action == 'SELL' %}
+                                        {{ trade.pnl_pct|format_percent }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle text-muted mb-2" style="font-size: 2rem;"></i>
+                        <p class="text-muted mb-0">No trades in the selected timeframe</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Equity Curve Chart
+        function initEquityChart() {
+            const chartData = {{ equity_curve|safe }};
+            const dates = chartData.map(item => item.date);
+            const values = chartData.map(item => item.value);
+            
+            const trace = {
+                x: dates,
+                y: values,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Portfolio Value',
+                line: {
+                    color: '#3498db',
+                    width: 2
+                },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(52, 152, 219, 0.1)'
+            };
+            
+            // Add initial balance reference line
+            const initialBalance = {{ initial_balance }};
+            const referenceLine = {
+                x: dates,
+                y: Array(dates.length).fill(initialBalance),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Initial Balance',
+                line: {
+                    color: 'rgba(255, 0, 0, 0.5)',
+                    width: 2,
+                    dash: 'dash'
+                }
+            };
+            
+            const layout = {
+                autosize: true,
+                margin: {
+                    l: 50,
+                    r: 50,
+                    b: 80,
+                    t: 20,
+                    pad: 4
+                },
+                xaxis: {
+                    title: 'Date',
+                    tickangle: -45
+                },
+                yaxis: {
+                    title: 'Value (₹)',
+                    tickformat: ',.2f'
+                },
+                legend: {
+                    orientation: 'h',
+                    y: 1.1
+                },
+                hovermode: 'closest'
+            };
+            
+            Plotly.newPlot('equity-chart', [trace, referenceLine], layout, {responsive: true});
+        }
+        
+        // Drawdown Chart
+        function initDrawdownChart() {
+            const chartData = {{ drawdown_data|safe }};
+            const dates = chartData.map(item => item.date);
+            const values = chartData.map(item => item.drawdown * 100); // Convert to percentage
+            
+            const trace = {
+                x: dates,
+                y: values,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Drawdown',
+                line: {
+                    color: '#e74c3c',
+                    width: 2
+                },
+                fill: 'tozeroy',
+                fillcolor: 'rgba(231, 76, 60, 0.1)'
+            };
+            
+            const layout = {
+                autosize: true,
+                margin: {
+                    l: 50,
+                    r: 50,
+                    b: 80,
+                    t: 20,
+                    pad: 4
+                },
+                xaxis: {
+                    title: 'Date',
+                    tickangle: -45
+                },
+                yaxis: {
+                    title: 'Drawdown (%)',
+                    tickformat: '.2f',
+                    ticksuffix: '%',
+                    rangemode: 'tozero',
+                    autorange: 'reversed' // Inverting y-axis for drawdown
+                },
+                showlegend: false,
+                hovermode: 'closest'
+            };
+            
+            Plotly.newPlot('drawdown-chart', [trace], layout, {responsive: true});
+        }
+        
+        // Win/Loss Pie Chart
+        function initWinLossPie() {
+            const data = [{
+                values: [{{ win_count }}, {{ loss_count }}],
+                labels: ['Winning Trades', 'Losing Trades'],
+                type: 'pie',
+                marker: {
+                    colors: ['#00b894', '#e74c3c']
+                },
+                textinfo: 'label+percent',
+                hole: 0.4,
+                insidetextorientation: 'radial'
+            }];
+            
+            const layout = {
+                title: 'Win/Loss Distribution',
+                showlegend: false,
+                margin: {
+                    l: 0,
+                    r: 0,
+                    b: 0,
+                    t: 30,
+                }
+            };
+            
+            Plotly.newPlot('win-loss-pie', data, layout, {responsive: true});
+        }
+        
+        // P&L Distribution Chart
+        function initPnlDistribution() {
+            const pnl_data = {{ pnl_distribution|safe }};
+            
+            const trace = {
+                x: pnl_data.map(bin => bin.range),
+                y: pnl_data.map(bin => bin.count),
+                type: 'bar',
+                marker: {
+                    color: pnl_data.map(bin => bin.range.startsWith('-') ? '#e74c3c' : '#00b894')
+                }
+            };
+            
+            const layout = {
+                title: 'P&L Distribution',
+                xaxis: {
+                    title: 'P&L Range (₹)'
+                },
+                yaxis: {
+                    title: 'Number of Trades'
+                },
+                margin: {
+                    l: 40,
+                    r: 10,
+                    b: 50,
+                    t: 30,
+                }
+            };
+            
+            Plotly.newPlot('pnl-distribution', [trace], layout, {responsive: true});
+        }
+        
+        // Initialize all charts
+        initEquityChart();
+        initDrawdownChart();
+        initWinLossPie();
+        initPnlDistribution();
+    });
+</script>
+{% endblock %}

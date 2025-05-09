@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Paper Trading System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            padding-top: 60px;
+        }
+        .navbar {
+            background-color: #2c3e50;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #ecf0f1 !important;
+        }
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            font-weight: bold;
+            background-color: #f1f5f9;
+        }
+        .table th {
+            background-color: #f1f5f9;
+        }
+        .profit {
+            color: #00b894;
+            font-weight: bold;
+        }
+        .loss {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .market-open {
+            color: #00b894;
+            font-weight: bold;
+        }
+        .market-closed {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .sidebar {
+            position: fixed;
+            top: 56px;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #2c3e50;
+            color: white;
+        }
+        .sidebar-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 10px 15px;
+            display: block;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-link:hover {
+            background-color: #34495e;
+            color: white;
+            border-left: 3px solid #3498db;
+        }
+        .sidebar-link.active {
+            background-color: #34495e;
+            color: white;
+            border-left: 3px solid #3498db;
+        }
+        .content {
+            margin-left: 240px;
+            padding: 15px;
+        }
+        .sidebar-icon {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+            }
+            .content {
+                margin-left: 0;
+            }
+        }
+        
+        /* Custom Dashboard Styles */
+        .metric-card {
+            border-left: 4px solid #3498db;
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .metric-title {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        .strategy-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            background-color: #3498db;
+            color: white;
+            font-size: 0.8rem;
+        }
+        .positions-table th, .positions-table td {
+            vertical-align: middle;
+        }
+        .refresh-btn {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+        .refresh-btn:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line me-2"></i>
+                Indian Paper Trading System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="refreshData">
+                            <i class="fas fa-sync-alt me-1"></i> Refresh Data
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="marketStatus">
+                            <i class="fas fa-clock me-1"></i> Market Status: Unknown
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar and Content -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 d-md-block sidebar">
+                <div class="pt-3">
+                    <a href="/" class="sidebar-link" id="dashboard-link">
+                        <i class="fas fa-tachometer-alt sidebar-icon"></i> Dashboard
+                    </a>
+                    <a href="/positions" class="sidebar-link" id="positions-link">
+                        <i class="fas fa-chart-pie sidebar-icon"></i> Positions
+                    </a>
+                    <a href="/orders" class="sidebar-link" id="orders-link">
+                        <i class="fas fa-exchange-alt sidebar-icon"></i> Orders
+                    </a>
+                    <a href="/trades" class="sidebar-link" id="trades-link">
+                        <i class="fas fa-history sidebar-icon"></i> Trade History
+                    </a>
+                    <a href="/performance" class="sidebar-link" id="performance-link">
+                        <i class="fas fa-chart-line sidebar-icon"></i> Performance
+                    </a>
+                    <a href="/charts" class="sidebar-link" id="charts-link">
+                        <i class="fas fa-chart-bar sidebar-icon"></i> Charts
+                    </a>
+                    <a href="/settings" class="sidebar-link" id="settings-link">
+                        <i class="fas fa-cog sidebar-icon"></i> Settings
+                    </a>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.25.2/plotly.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        // Set active link in sidebar
+        $(document).ready(function() {
+            const path = window.location.pathname;
+            $('.sidebar-link').removeClass('active');
+            
+            if (path === '/') {
+                $('#dashboard-link').addClass('active');
+            } else {
+                $(`a[href="${path}"]`).addClass('active');
+            }
+            
+            // Refresh button functionality
+            $('#refreshData').click(function(e) {
+                e.preventDefault();
+                location.reload();
+            });
+            
+            // Auto-update market status
+            function updateMarketStatus() {
+                $.get('/api/market_status', function(data) {
+                    const statusElement = $('#marketStatus');
+                    if (data.is_open) {
+                        statusElement.html('<i class="fas fa-clock me-1"></i> Market: <span class="market-open">Open</span>');
+                    } else {
+                        statusElement.html('<i class="fas fa-clock me-1"></i> Market: <span class="market-closed">Closed</span>');
+                    }
+                });
+            }
+            
+            // Update market status every minute
+            updateMarketStatus();
+            setInterval(updateMarketStatus, 60000);
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

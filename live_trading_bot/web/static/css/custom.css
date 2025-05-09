@@ -1,0 +1,115 @@
+/* Custom styles for RL Trading Bot */
+
+/* Status indicator */
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.status-dot.online {
+  background-color: #28a745;
+}
+
+.status-dot.offline {
+  background-color: #dc3545;
+}
+
+.status-dot.warning {
+  background-color: #ffc107;
+}
+
+/* Dashboard cards */
+.card-header {
+  font-weight: bold;
+}
+
+.card {
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Positive/negative values */
+.positive {
+  color: #28a745;
+}
+
+.negative {
+  color: #dc3545;
+}
+
+/* Tables */
+.table th {
+  background-color: #f8f9fa;
+}
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+  .card-header .row {
+      flex-direction: column;
+  }
+  
+  .card-header .text-end {
+      text-align: left !important;
+      margin-top: 10px;
+  }
+}
+
+/* Login page */
+.form-signin {
+  width: 100%;
+  max-width: 330px;
+  padding: 15px;
+  margin: auto;
+}
+
+.form-signin .form-floating:focus-within {
+  z-index: 2;
+}
+
+.form-signin input[type="text"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* Trade row hover effect */
+#trades-table tbody tr {
+  cursor: pointer;
+}
+
+#trades-table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* Settings page */
+.tab-pane {
+  padding: 20px 0;
+}
+
+/* Chart containers */
+.chart-container {
+  position: relative;
+  height: 300px;
+}
+
+/* Tooltips */
+.tooltip-inner {
+  max-width: 300px;
+}
+
+/* Footer */
+.footer {
+  margin-top: 50px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top: 1px solid #e9ecef;
+}
