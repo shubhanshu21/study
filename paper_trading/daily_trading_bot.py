@@ -695,12 +695,28 @@ class DailyTradingAgent:
         self.token = None
         self.df = pd.DataFrame()
         self.current_step = 0
+        self.daily_analysis_completed = False
+        self.last_trading_date = None
         
-        # Portfolio state
-        self.balance = INITIAL_BALANCE
-        self.initial_balance = INITIAL_BALANCE
-        self.shares_held = 0
-        self.cost_basis = 0
+        # Portfolio state - UPDATED LOGIC
+        self.initial_balance = INITIAL_BALANCE  # Keep original for PnL calculation
+        
+        if paper_trading:
+            # Try to load existing balance for paper trading
+            if not self.load_balance_from_file():
+                # If no saved balance, start with initial balance
+                self.balance = INITIAL_BALANCE
+                self.shares_held = 0
+                self.cost_basis = 0
+        else:
+            # For live trading, always start fresh (broker manages actual balance)
+            self.balance = INITIAL_BALANCE
+            self.shares_held = 0
+            self.cost_basis = 0
+            
+            
+        self.load_live_balance_from_db()
+
         self.position = {'quantity': 0, 'avg_price': 0, 'last_price': 0, 'pnl': 0}
         self.order_history = []
         
@@ -717,15 +733,22 @@ class DailyTradingAgent:
         # Setup Zerodha connection
         self.setup_zerodha()
         
+        # FOR LIVE TRADING: Sync with real balance after Zerodha setup
+        if not paper_trading:
+            if not self.sync_with_broker_balance():
+                logger.warning("⚠️ Could not sync with live balance, using last known values")
+        
         logger.info(f"Daily Trading Agent initialized for {symbol}")
         logger.info(f"Paper Trading: {paper_trading}")
-        logger.info(f"Initial Balance: ₹{self.balance:.2f}")
+        logger.info(f"Initial Balance: ₹{self.initial_balance:.2f}")
+        logger.info(f"Current Balance: ₹{self.balance:.2f}")
 
+    
     def create_tables(self):
         """Create database tables for storing trading data"""
         cursor = self.db_conn.cursor()
         
-        # Orders table
+        # Orders table (updated schema)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -803,8 +826,42 @@ class DailyTradingAgent:
                 status TEXT DEFAULT 'PENDING'
             )''')
         
+        # Live balance tracking table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS live_balance (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME,
+                symbol TEXT,
+                cash_balance REAL,
+                shares_held INTEGER,
+                cost_basis REAL,
+                last_synced DATETIME,
+                trading_mode TEXT,
+                UNIQUE(symbol, trading_mode)
+            )''')
+        
+        # Order execution tracking for live trades
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS live_order_tracking (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id TEXT UNIQUE,
+                symbol TEXT,
+                status TEXT,
+                quantity INTEGER,
+                price REAL,
+                executed_quantity INTEGER,
+                executed_price REAL,
+                timestamp DATETIME,
+                last_checked DATETIME
+            )''')
+        
         self.db_conn.commit()
+        
+        # Update schema for existing tables
+        self.update_database_schema()
+        
         logger.info("Database tables created/verified")
+
 
     def setup_zerodha(self):
         """Setup Zerodha KiteConnect API with automatic token management"""
@@ -872,6 +929,120 @@ class DailyTradingAgent:
             self.email_manager.send_error_notification("Token Refresh", str(e), self.symbol, self.paper_trading)
             return False
 
+    def fetch_live_balance(self):
+        """Fetch real balance and positions from Zerodha"""
+        try:
+            if not self.kite:
+                return False
+            
+            # Get margins (available balance)
+            margins = self.kite.margins()
+            available_cash = margins['equity']['available']['cash']
+            
+            # Get positions
+            positions = self.kite.positions()['net']
+            
+            # Find position for current symbol
+            current_position = None
+            for pos in positions:
+                if pos['tradingsymbol'] == self.symbol:
+                    current_position = pos
+                    break
+            
+            # Update local variables with real data
+            self.balance = available_cash
+            
+            if current_position:
+                self.shares_held = current_position['quantity']
+                self.cost_basis = current_position['average_price'] if current_position['average_price'] > 0 else 0
+            else:
+                self.shares_held = 0
+                self.cost_basis = 0
+            
+            logger.info(f"✅ Live balance synced: ₹{self.balance:.2f}, Shares: {self.shares_held}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to fetch live balance: {e}")
+            return False
+
+    def sync_with_broker_balance(self):
+        """Sync local balance with actual broker balance"""
+        if not self.paper_trading and self.kite:
+            try:
+                success = self.fetch_live_balance()
+                if success:
+                    # Save to database
+                    self.save_live_balance_to_db()
+                    # Save to file for persistence
+                    self.save_balance_to_file()
+                    return True
+            except Exception as e:
+                logger.error(f"Failed to sync balance: {e}")
+        return False
+
+    def save_live_balance_to_db(self):
+        """Save live balance to database"""
+        try:
+            cursor = self.db_conn.cursor()
+            cursor.execute('''
+                INSERT OR REPLACE INTO live_balance (
+                    timestamp, symbol, cash_balance, shares_held, 
+                    cost_basis, last_synced, trading_mode
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                datetime.now(TIMEZONE).isoformat(),
+                self.symbol,
+                self.balance,
+                self.shares_held,
+                self.cost_basis,
+                datetime.now(TIMEZONE).isoformat(),
+                'LIVE'
+            ))
+            self.db_conn.commit()
+            logger.info(f"💾 Live balance saved to DB: ₹{self.balance:.2f}")
+        except Exception as e:
+            logger.error(f"Error saving live balance to DB: {e}")
+
+    def load_live_balance_from_db(self):
+        """Load last known live balance from database"""
+        try:
+            cursor = self.db_conn.cursor()
+            cursor.execute('''
+                SELECT cash_balance, shares_held, cost_basis, last_synced 
+                FROM live_balance 
+                WHERE symbol = ? AND trading_mode = 'LIVE'
+                ORDER BY timestamp DESC LIMIT 1
+            ''', (self.symbol,))
+            
+            result = cursor.fetchone()
+            if result:
+                self.balance, self.shares_held, self.cost_basis, last_synced = result
+                logger.info(f"📁 Live balance loaded from DB: ₹{self.balance:.2f} (synced: {last_synced})")
+                return True
+        except Exception as e:
+            logger.error(f"Error loading live balance from DB: {e}")
+        return False
+
+    def track_live_order(self, order_id, order):
+        """Track live order execution"""
+        try:
+            cursor = self.db_conn.cursor()
+            cursor.execute('''
+                INSERT OR REPLACE INTO live_order_tracking 
+                (order_id, symbol, status, quantity, price, timestamp, last_checked)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                order_id, self.symbol, 'PLACED', 
+                order['quantity'], order['price'],
+                datetime.now(TIMEZONE).isoformat(),
+                datetime.now(TIMEZONE).isoformat()
+            ))
+            self.db_conn.commit()
+        except Exception as e:
+            logger.error(f"Error tracking live order: {e}")
+
+
     def is_market_open(self):
         """Check if market is currently open"""
         now = datetime.now(TIMEZONE)
@@ -928,10 +1099,11 @@ class DailyTradingAgent:
             cursor = self.db_conn.cursor()
             today = datetime.now(TIMEZONE).strftime('%Y-%m-%d')
             
-            # Get pending AMO orders for today
+            # Get pending AMO orders for today and earlier dates (in case of missed executions)
             cursor.execute('''
                 SELECT * FROM pending_amo_orders 
-                WHERE execution_date = ? AND status = 'PENDING'
+                WHERE execution_date <= ? AND status = 'PENDING'
+                ORDER BY execution_date ASC
             ''', (today,))
             
             pending_orders = cursor.fetchall()
@@ -947,7 +1119,7 @@ class DailyTradingAgent:
                 # Simulate order execution at market open price
                 current_price = self.get_current_market_price() or price
                 
-                logger.info(f"📈 Executing AMO order: {order_type} {quantity} shares at ₹{current_price:.2f}")
+                logger.info(f"📈 Executing AMO order: {order_type} {quantity} shares at ₹{current_price:.2f} (scheduled for {execution_date})")
                 
                 # Execute the order
                 trade_value = quantity * current_price
@@ -967,6 +1139,9 @@ class DailyTradingAgent:
                         
                         execution_status = 'COMPLETED'
                         logger.info(f"✅ AMO BUY executed: {quantity} shares at ₹{current_price:.2f}")
+                        
+                        # Save balance after AMO execution
+                        self.save_balance_to_file()
                     else:
                         execution_status = 'REJECTED - Insufficient funds'
                         logger.warning(f"❌ AMO BUY rejected: Insufficient funds")
@@ -981,6 +1156,9 @@ class DailyTradingAgent:
                         
                         execution_status = 'COMPLETED'
                         logger.info(f"✅ AMO SELL executed: {quantity} shares at ₹{current_price:.2f}")
+                        
+                        # Save balance after AMO execution
+                        self.save_balance_to_file()
                     else:
                         execution_status = 'REJECTED - Insufficient shares'
                         logger.warning(f"❌ AMO SELL rejected: Insufficient shares")
@@ -1001,7 +1179,8 @@ class DailyTradingAgent:
                     'timestamp': datetime.now(TIMEZONE).isoformat(),
                     'transaction_cost': transaction_cost,
                     'status': execution_status,
-                    'order_id': f"AMO_{order_id}"
+                    'order_id': f"AMO_{order_id}",
+                    'order_variety': 'amo'
                 }
                 self.save_order(executed_order)
                 
@@ -1013,6 +1192,7 @@ class DailyTradingAgent:
         except Exception as e:
             logger.error(f"Error executing AMO orders: {e}")
             self.email_manager.send_error_notification("AMO Execution", str(e), self.symbol, self.paper_trading)
+
 
     def fetch_historical_data(self, interval='day', days=365):
         """Fetch historical data from Zerodha with token refresh"""
@@ -1170,8 +1350,138 @@ class DailyTradingAgent:
             self.email_manager.send_error_notification("Observation Preparation", str(e), self.symbol, self.paper_trading)
             return None
 
+
+    # def place_order(self, order_type, quantity, price, order_variety="regular"):
+    #     """Place an order with balance persistence"""
+    #     if quantity <= 0 or price <= 0:
+    #         logger.warning(f"Invalid order parameters: quantity={quantity}, price={price}")
+    #         return None
+        
+    #     trade_value = quantity * price
+    #     transaction_cost = self.calculate_transaction_costs(trade_value)
+        
+    #     order = {
+    #         'symbol': self.symbol,
+    #         'type': order_type,
+    #         'quantity': quantity,
+    #         'price': price,
+    #         'timestamp': datetime.now(TIMEZONE).isoformat(),
+    #         'transaction_cost': transaction_cost,
+    #         'status': 'PENDING',
+    #         'order_id': f"PAPER_{int(time.time())}" if self.paper_trading else None,
+    #         'order_variety': order_variety
+    #     }
+        
+    #     if self.paper_trading:
+    #         # Paper trading now mimics live trading exactly
+    #         if order_variety == "amo":
+    #             # Simulate AMO behavior - order queued for next day
+    #             order['status'] = 'AMO_PLACED'
+    #             order['execution_date'] = (datetime.now(TIMEZONE) + timedelta(days=1)).strftime('%Y-%m-%d')
+    #             logger.info(f"📝 Paper AMO queued: {order_type} {quantity} shares at ₹{price:.2f} for next trading day")
+                
+    #             # Store AMO order for execution simulation tomorrow
+    #             self.store_pending_amo_order(order)
+                
+    #         else:
+    #             # Regular order - immediate execution (only during market hours)
+    #             if self.is_market_open():
+    #                 if order_type == "BUY":
+    #                     total_cost = trade_value + transaction_cost
+    #                     if self.balance >= total_cost:
+    #                         self.balance -= total_cost
+                            
+    #                         # Update position
+    #                         if self.shares_held >= 0:
+    #                             total_value = self.shares_held * self.cost_basis + trade_value
+    #                             self.shares_held += quantity
+    #                             self.cost_basis = total_value / self.shares_held if self.shares_held > 0 else 0
+    #                         else:
+    #                             self.shares_held += quantity
+                            
+    #                         order['status'] = 'COMPLETED'
+    #                         logger.info(f"✅ Paper BUY executed: {quantity} shares at ₹{price:.2f}")
+                            
+    #                         # Save balance after successful trade
+    #                         self.save_balance_to_file()
+    #                     else:
+    #                         order['status'] = 'REJECTED - Insufficient funds'
+    #                         logger.warning(f"❌ Paper BUY rejected: Insufficient funds")
+                    
+    #                 elif order_type == "SELL":
+    #                     if self.shares_held >= quantity:
+    #                         self.balance += (trade_value - transaction_cost)
+    #                         self.shares_held -= quantity
+                            
+    #                         if self.shares_held == 0:
+    #                             self.cost_basis = 0
+                            
+    #                         order['status'] = 'COMPLETED'
+    #                         logger.info(f"✅ Paper SELL executed: {quantity} shares at ₹{price:.2f}")
+                            
+    #                         # Save balance after successful trade
+    #                         self.save_balance_to_file()
+    #                     else:
+    #                         order['status'] = 'REJECTED - Insufficient shares'
+    #                         logger.warning(f"❌ Paper SELL rejected: Insufficient shares")
+    #             else:
+    #                 order['status'] = 'REJECTED - Market closed'
+    #                 logger.warning(f"❌ Paper order rejected: Market is closed")
+        
+    #     else:
+    #         # Live trading execution (unchanged)
+    #         try:
+    #             order_params = {
+    #                 'variety': order_variety,
+    #                 'exchange': 'NSE',
+    #                 'tradingsymbol': self.symbol,
+    #                 'transaction_type': order_type,
+    #                 'quantity': quantity,
+    #                 'order_type': 'MARKET',
+    #                 'product': 'CNC',
+    #                 'validity': 'DAY'
+    #             }
+                
+    #             if order_variety == "amo":
+    #                 order_params['validity'] = 'DAY'
+                
+    #             try:
+    #                 order_id = self.kite.place_order(**order_params)
+    #             except exceptions.TokenException:
+    #                 logger.warning("Token expired during order placement, refreshing...")
+    #                 if self.refresh_zerodha_token():
+    #                     order_id = self.kite.place_order(**order_params)
+    #                 else:
+    #                     raise ValueError("Failed to refresh token for order placement")
+                
+    #             order['order_id'] = order_id
+    #             order['status'] = 'PLACED'
+                
+    #             logger.info(f"✅ Live order placed: {order_id}")
+                
+    #         except Exception as e:
+    #             order['status'] = f'FAILED: {str(e)}'
+    #             logger.error(f"❌ Live order failed: {e}")
+    #             self.email_manager.send_error_notification("Order Placement", str(e), self.symbol, self.paper_trading)
+        
+    #     # Update position tracking
+    #     self.position['quantity'] = self.shares_held
+    #     self.position['avg_price'] = self.cost_basis
+    #     self.position['last_price'] = price
+    #     self.position['pnl'] = self.shares_held * (price - self.cost_basis) if self.cost_basis > 0 else 0
+        
+    #     # Save order to database
+    #     self.save_order(order)
+    #     self.order_history.append(order)
+        
+    #     # Send order notification (only for immediate executions, not AMO queuing)
+    #     if order['status'] not in ['AMO_PLACED', 'PENDING']:
+    #         self.email_manager.send_order_notification(order, self.symbol, self.paper_trading)
+        
+    #     return order
+
     def place_order(self, order_type, quantity, price, order_variety="regular"):
-        """Place an order (paper trading now mimics live trading exactly)"""
+        """Enhanced order placement with real balance tracking"""
         if quantity <= 0 or price <= 0:
             logger.warning(f"Invalid order parameters: quantity={quantity}, price={price}")
             return None
@@ -1192,48 +1502,39 @@ class DailyTradingAgent:
         }
         
         if self.paper_trading:
-            # Paper trading now mimics live trading exactly
+            # Paper trading logic (unchanged)
             if order_variety == "amo":
-                # Simulate AMO behavior - order queued for next day
                 order['status'] = 'AMO_PLACED'
                 order['execution_date'] = (datetime.now(TIMEZONE) + timedelta(days=1)).strftime('%Y-%m-%d')
                 logger.info(f"📝 Paper AMO queued: {order_type} {quantity} shares at ₹{price:.2f} for next trading day")
-                
-                # Store AMO order for execution simulation tomorrow
                 self.store_pending_amo_order(order)
-                
             else:
-                # Regular order - immediate execution (only during market hours)
                 if self.is_market_open():
                     if order_type == "BUY":
                         total_cost = trade_value + transaction_cost
                         if self.balance >= total_cost:
                             self.balance -= total_cost
-                            
-                            # Update position
                             if self.shares_held >= 0:
                                 total_value = self.shares_held * self.cost_basis + trade_value
                                 self.shares_held += quantity
                                 self.cost_basis = total_value / self.shares_held if self.shares_held > 0 else 0
                             else:
                                 self.shares_held += quantity
-                            
                             order['status'] = 'COMPLETED'
                             logger.info(f"✅ Paper BUY executed: {quantity} shares at ₹{price:.2f}")
+                            self.save_balance_to_file()
                         else:
                             order['status'] = 'REJECTED - Insufficient funds'
                             logger.warning(f"❌ Paper BUY rejected: Insufficient funds")
-                    
                     elif order_type == "SELL":
                         if self.shares_held >= quantity:
                             self.balance += (trade_value - transaction_cost)
                             self.shares_held -= quantity
-                            
                             if self.shares_held == 0:
                                 self.cost_basis = 0
-                            
                             order['status'] = 'COMPLETED'
                             logger.info(f"✅ Paper SELL executed: {quantity} shares at ₹{price:.2f}")
+                            self.save_balance_to_file()
                         else:
                             order['status'] = 'REJECTED - Insufficient shares'
                             logger.warning(f"❌ Paper SELL rejected: Insufficient shares")
@@ -1242,7 +1543,7 @@ class DailyTradingAgent:
                     logger.warning(f"❌ Paper order rejected: Market is closed")
         
         else:
-            # Live trading execution
+            # Live trading with real balance tracking
             try:
                 order_params = {
                     'variety': order_variety,
@@ -1270,6 +1571,12 @@ class DailyTradingAgent:
                 order['order_id'] = order_id
                 order['status'] = 'PLACED'
                 
+                # Track order for execution monitoring
+                self.track_live_order(order_id, order)
+                
+                # Sync balance after order placement
+                self.sync_with_broker_balance()
+                
                 logger.info(f"✅ Live order placed: {order_id}")
                 
             except Exception as e:
@@ -1293,6 +1600,7 @@ class DailyTradingAgent:
         
         return order
 
+
     def save_order(self, order):
         """Save order to database"""
         try:
@@ -1311,6 +1619,34 @@ class DailyTradingAgent:
             logger.error(f"Error saving order: {e}")
             self.email_manager.send_error_notification("Database Error", str(e), self.symbol, self.paper_trading)
 
+    # def save_daily_snapshot(self):
+    #     """Save daily account snapshot and send PnL report"""
+    #     try:
+    #         position_value = self.shares_held * self.position['last_price']
+    #         equity = self.balance + position_value
+    #         total_pnl = equity - self.initial_balance
+            
+    #         cursor = self.db_conn.cursor()
+    #         cursor.execute('''
+    #             INSERT INTO account_snapshots (timestamp, balance, equity, position_value, total_pnl)
+    #             VALUES (?, ?, ?, ?, ?)
+    #         ''', (
+    #             datetime.now(TIMEZONE).isoformat(), self.balance, equity, position_value, total_pnl
+    #         ))
+    #         self.db_conn.commit()
+            
+    #         logger.info(f"📊 Daily Snapshot - Balance: ₹{self.balance:.2f}, Equity: ₹{equity:.2f}, PnL: ₹{total_pnl:.2f}")
+            
+    #         # Send PnL report
+    #         self.email_manager.send_pnl_report(
+    #             self.symbol, self.balance, equity, position_value, total_pnl,
+    #             self.shares_held, self.cost_basis, self.position['last_price'], self.paper_trading
+    #         )
+            
+    #     except Exception as e:
+    #         logger.error(f"Error saving daily snapshot: {e}")
+    #         self.email_manager.send_error_notification("Snapshot Error", str(e), self.symbol, self.paper_trading)
+
     def save_daily_snapshot(self):
         """Save daily account snapshot and send PnL report"""
         try:
@@ -1327,6 +1663,10 @@ class DailyTradingAgent:
             ))
             self.db_conn.commit()
             
+            # Save current balance for persistence (paper trading)
+            if self.paper_trading:
+                self.save_balance_to_file()
+            
             logger.info(f"📊 Daily Snapshot - Balance: ₹{self.balance:.2f}, Equity: ₹{equity:.2f}, PnL: ₹{total_pnl:.2f}")
             
             # Send PnL report
@@ -1339,86 +1679,213 @@ class DailyTradingAgent:
             logger.error(f"Error saving daily snapshot: {e}")
             self.email_manager.send_error_notification("Snapshot Error", str(e), self.symbol, self.paper_trading)
 
-    def daily_analysis_and_trading(self):
-        """Enhanced daily analysis with AMO execution check and email notifications"""
+
+    def save_balance_to_file(self):
+        """Save current balance to file for persistence"""
         try:
+            balance_file = f"{self.symbol}_balance.txt"
+            with open(balance_file, "w") as f:
+                f.write(f"{self.balance}\n{self.shares_held}\n{self.cost_basis}")
+            logger.info(f"💾 Balance saved: ₹{self.balance:.2f}")
+        except Exception as e:
+            logger.error(f"Error saving balance: {e}")
+
+    def load_balance_from_file(self):
+        """Load balance from file if exists"""
+        try:
+            balance_file = f"{self.symbol}_balance.txt"
+            if os.path.exists(balance_file):
+                with open(balance_file, "r") as f:
+                    lines = f.read().strip().split('\n')
+                    if len(lines) >= 3:
+                        self.balance = float(lines[0])
+                        self.shares_held = int(lines[1])
+                        self.cost_basis = float(lines[2])
+                        logger.info(f"📁 Balance loaded: ₹{self.balance:.2f}, Shares: {self.shares_held}")
+                        return True
+        except Exception as e:
+            logger.error(f"Error loading balance: {e}")
+        return False
+
+    def update_database_schema(self):
+        """Update database schema to add missing columns"""
+        cursor = self.db_conn.cursor()
+        
+        try:
+            # Check if order_variety column exists
+            cursor.execute("PRAGMA table_info(orders)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'order_variety' not in columns:
+                cursor.execute('ALTER TABLE orders ADD COLUMN order_variety TEXT DEFAULT "regular"')
+                logger.info("✅ Added order_variety column to orders table")
+            
+            self.db_conn.commit()
+            
+        except Exception as e:
+            logger.error(f"Error updating database schema: {e}")
+
+    def has_traded_today(self):
+        """Check if any successful trade happened today"""
+        today = datetime.now(TIMEZONE).strftime('%Y-%m-%d')
+        cursor = self.db_conn.cursor()
+        cursor.execute('''
+            SELECT COUNT(*) FROM orders 
+            WHERE DATE(timestamp) = ? 
+            AND status IN ('COMPLETED', 'PLACED', 'AMO_PLACED')
+        ''', (today,))
+        return cursor.fetchone()[0] > 0
+
+
+    def daily_analysis_and_trading(self):
+        """Enhanced daily analysis with morning AMO execution and evening analysis"""
+        try:
+            now = datetime.now(TIMEZONE)
             logger.info("🔍 Starting daily analysis...")
             
-            # 1. Execute any pending AMO orders first (paper trading)
-            if self.paper_trading:
-                self.execute_pending_amo_orders()
+            # Check if already traded today
+            if self.has_traded_today():
+                logger.info("✅ Already traded today, skipping analysis")
+                return True  # Return success to stop trying other windows
             
-            # 2. Refresh token if needed
-            if not self.paper_trading:
-                print("🔄 Refreshing token before analysis...")
-                self.refresh_zerodha_token()
+            # Morning window (9:30 AM - 11:00 AM): Only execute AMO orders
+            if self.is_morning_window():
+                logger.info("🌅 Morning window - Checking AMO execution only")
+                
+                if self.paper_trading:
+                    # Check for pending AMO orders from yesterday or earlier
+                    cursor = self.db_conn.cursor()
+                    cursor.execute('''
+                        SELECT COUNT(*) FROM pending_amo_orders 
+                        WHERE status = 'PENDING' AND execution_date <= ?
+                    ''', (now.strftime('%Y-%m-%d'),))
+                    
+                    pending_count = cursor.fetchone()[0]
+                    if pending_count > 0:
+                        logger.info(f"📈 Found {pending_count} pending AMO orders to execute")
+                        self.execute_pending_amo_orders()
+                        
+                        # Check if AMO was executed (which creates an order)
+                        if self.has_traded_today():
+                            logger.info("✅ AMO executed in morning window")
+                            return True
+                    else:
+                        logger.info("ℹ️ No pending AMO orders to execute")
+                
+                return False  # Continue to next window if no AMO executed
             
-            # 3. Fetch latest historical data
-            df = self.fetch_historical_data(interval='day', days=365)
-            if df.empty:
-                logger.error("❌ Failed to fetch historical data")
-                self.email_manager.send_error_notification("Data Fetch", "Failed to fetch historical data", self.symbol, self.paper_trading)
-                return
-            
-            # 4. Calculate technical indicators
-            df = self.calculate_all_indicators(df)
-            if df.empty:
-                logger.error("❌ Failed to calculate indicators")
-                self.email_manager.send_error_notification("Indicator Calculation", "Failed to calculate indicators", self.symbol, self.paper_trading)
-                return
-            
-            # 5. Update internal state
-            self.df = df
-            self.current_step = len(df) - 1  # Point to latest complete day
-            
-            # 6. Get current price (today's closing price)
-            current_price = df.iloc[-1]['Close']
-            self.position['last_price'] = current_price
-            
-            # 7. Generate observation
-            obs = self.prepare_observation()
-            if obs is None:
-                logger.error("❌ Failed to prepare observation")
-                self.email_manager.send_error_notification("Observation Error", "Failed to prepare observation", self.symbol, self.paper_trading)
-                return
-            
-            # 8. Get model prediction
-            action, _states = self.model.predict(obs, deterministic=True)
-            action_names = {0: "HOLD", 1: "BUY", 2: "SELL"}
-            predicted_action = action_names[int(action)]
-            
-            logger.info(f"🤖 Model Prediction: {predicted_action} at ₹{current_price:.2f}")
-            
-            # 9. Calculate position size
-            position_size = self.calculate_position_size(current_price)
-            
-            # 10. Execute trade based on prediction (now uses AMO for both paper and live)
-            order = None
-            if predicted_action == "BUY" and position_size > 0:
-                order = self.place_order("BUY", position_size, current_price, "amo")
-            elif predicted_action == "SELL" and self.shares_held > 0:
-                sell_quantity = min(position_size, self.shares_held)
-                order = self.place_order("SELL", sell_quantity, current_price, "amo")
-            
-            # 11. Save analysis to database
-            self.save_daily_analysis(predicted_action, current_price, obs)
-            
-            # 12. Save daily snapshot and send PnL report
-            self.save_daily_snapshot()
-            
-            # 13. Send daily analysis summary
-            analysis_result = {
-                'action': predicted_action,
-                'price': current_price
-            }
-            self.email_manager.send_daily_summary(self.symbol, analysis_result, self.paper_trading)
-            
-            logger.info("✅ Daily analysis completed")
-            
+            # Evening window (4:00 PM onwards): Full analysis
+            else:
+                logger.info("🌆 Evening window - Full analysis")
+                
+                # 1. Execute any pending AMO orders first (in case morning window missed them)
+                if self.paper_trading:
+                    self.execute_pending_amo_orders()
+                
+                # 2. Refresh token if needed with retry
+                if not self.paper_trading:
+                    retry_count = 3
+                    for attempt in range(retry_count):
+                        try:
+                            print("🔄 Refreshing token before analysis...")
+                            if self.refresh_zerodha_token():
+                                break
+                            elif attempt == retry_count - 1:
+                                raise Exception("Failed to refresh token after 3 attempts")
+                        except Exception as e:
+                            if attempt == retry_count - 1:
+                                logger.error(f"❌ Token refresh failed after {retry_count} attempts: {e}")
+                                return False
+                            else:
+                                logger.warning(f"⚠️ Token refresh attempt {attempt + 1} failed, retrying...")
+                                time.sleep(30)
+                
+                # 3. Fetch latest historical data with retry
+                retry_count = 3
+                df = None
+                for attempt in range(retry_count):
+                    try:
+                        df = self.fetch_historical_data(interval='day', days=365)
+                        if not df.empty:
+                            break
+                        elif attempt == retry_count - 1:
+                            raise Exception("Failed to fetch historical data after 3 attempts")
+                    except Exception as e:
+                        if attempt == retry_count - 1:
+                            logger.error(f"❌ Data fetch failed after {retry_count} attempts: {e}")
+                            return False
+                        else:
+                            logger.warning(f"⚠️ Data fetch attempt {attempt + 1} failed, retrying...")
+                            time.sleep(30)
+                
+                if df.empty:
+                    logger.error("❌ Failed to fetch historical data")
+                    return False
+                
+                # 4. Calculate technical indicators
+                df = self.calculate_all_indicators(df)
+                if df.empty:
+                    logger.error("❌ Failed to calculate indicators")
+                    return False
+                
+                # 5. Update internal state
+                self.df = df
+                self.current_step = len(df) - 1
+                
+                # 6. Get current price
+                current_price = df.iloc[-1]['Close']
+                self.position['last_price'] = current_price
+                
+                # 7. Generate observation
+                obs = self.prepare_observation()
+                if obs is None:
+                    logger.error("❌ Failed to prepare observation")
+                    return False
+                
+                # 8. Get model prediction
+                action, _states = self.model.predict(obs, deterministic=True)
+                action_names = {0: "HOLD", 1: "BUY", 2: "SELL"}
+                predicted_action = action_names[int(action)]
+                
+                logger.info(f"🤖 Model Prediction: {predicted_action} at ₹{current_price:.2f}")
+                
+                # 9. Calculate position size
+                position_size = self.calculate_position_size(current_price)
+                
+                # 10. Execute trade based on prediction
+                order = None
+                if predicted_action == "BUY" and position_size > 0:
+                    order = self.place_order("BUY", position_size, current_price, "amo")
+                elif predicted_action == "SELL" and self.shares_held > 0:
+                    sell_quantity = min(position_size, self.shares_held)
+                    order = self.place_order("SELL", sell_quantity, current_price, "amo")
+                
+                # 11. Send order notification if order was placed
+                if order and order['status'] not in ['REJECTED', 'FAILED']:
+                    self.email_manager.send_order_notification(order, self.symbol, self.paper_trading)
+                
+                # 12. Save analysis to database
+                self.save_daily_analysis(predicted_action, current_price, obs)
+                
+                # 13. Save daily snapshot and send PnL report
+                self.save_daily_snapshot()
+                
+                # 14. Send daily analysis summary
+                analysis_result = {
+                    'action': predicted_action,
+                    'price': current_price
+                }
+                self.email_manager.send_daily_summary(self.symbol, analysis_result, self.paper_trading)
+                
+                logger.info("✅ Daily analysis completed successfully")
+                return True
+                
         except Exception as e:
             logger.error(f"❌ Error in daily analysis: {e}")
             self.email_manager.send_error_notification("Daily Analysis", str(e), self.symbol, self.paper_trading)
+            return False
 
+    
     def save_daily_analysis(self, action, price, indicators):
         """Save daily analysis to database"""
         try:
@@ -1439,65 +1906,186 @@ class DailyTradingAgent:
         now = datetime.now(TIMEZONE)
         return now.weekday() < 5  # Monday=0, Friday=4
 
-    def get_next_analysis_time(self):
-        """Get next analysis time (market close + 30 minutes)"""
+    # def get_next_analysis_time(self):
+    #     """Get next analysis time (market close + 30 minutes)"""
+    #     now = datetime.now(TIMEZONE)
+        
+    #     # Market closes at 3:30 PM, analysis at 4:00 PM
+    #     analysis_time = now.replace(hour=16, minute=0, second=0, microsecond=0)
+        
+    #     # If current time is past analysis time, move to next trading day
+    #     if now >= analysis_time:
+    #         analysis_time += timedelta(days=1)
+            
+    #     # Skip weekends
+    #     while analysis_time.weekday() >= 5:
+    #         analysis_time += timedelta(days=1)
+            
+    #     return analysis_time
+    
+    def get_trading_windows(self):
+        """Get multiple trading time windows including morning AMO execution"""
         now = datetime.now(TIMEZONE)
+        current_date = now.date()
         
-        # Market closes at 3:30 PM, analysis at 4:00 PM
-        analysis_time = now.replace(hour=16, minute=0, second=0, microsecond=0)
+        # Morning windows for AMO execution
+        morning_windows = [
+            (9, 30),   # 9:30 AM - AMO execution check
+            (10, 0),   # 10:00 AM - Backup AMO check
+            (10, 30),  # 10:30 AM - Final AMO check
+        ]
         
-        # If current time is past analysis time, move to next trading day
-        if now >= analysis_time:
-            analysis_time += timedelta(days=1)
+        # Evening analysis windows  
+        evening_windows = [
+            (16, 0),   # 4:00 PM - Primary analysis window
+            (16, 30),  # 4:30 PM - First backup
+            (17, 0),   # 5:00 PM - Second backup
+            (17, 30),  # 5:30 PM - Third backup
+            (18, 0),   # 6:00 PM - Fourth backup
+            (19, 0),   # 7:00 PM - Fifth backup
+            (20, 0),   # 8:00 PM - Final backup
+            (21, 0),   # 9:00 PM - Final backup
+            (22, 0),   # 10:00 PM - Final backup
+            (23, 0),   # 11:00 PM - Final backup
+        ]
+        
+        # Combine all windows based on time of day
+        if now.hour < 12:  # Morning - include both morning and evening windows
+            all_windows = morning_windows + evening_windows
+        else:  # Afternoon/Evening - only evening windows
+            all_windows = evening_windows
+        
+        windows = []
+        for hour, minute in all_windows:
+            window_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
             
+            # Only add future windows for today
+            if window_time.date() == current_date and window_time >= now:
+                windows.append(window_time)
+        
+        # If no windows left for today, add tomorrow's windows
+        if not windows:
+            tomorrow = now + timedelta(days=1)
+            while tomorrow.weekday() >= 5:  # Skip weekends
+                tomorrow += timedelta(days=1)
+            
+            # Tomorrow gets all windows (morning + evening)
+            all_tomorrow_windows = morning_windows + evening_windows
+            for hour, minute in all_tomorrow_windows:
+                window_time = tomorrow.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                windows.append(window_time)
+        
+        return windows
+
+
+    def get_next_trading_day(self):
+        """Get next trading day"""
+        now = datetime.now(TIMEZONE)
+        next_day = now + timedelta(days=1)
+        
         # Skip weekends
-        while analysis_time.weekday() >= 5:
-            analysis_time += timedelta(days=1)
-            
-        return analysis_time
+        while next_day.weekday() >= 5:
+            next_day += timedelta(days=1)
+        
+        return next_day.replace(hour=9, minute=0, second=0, microsecond=0)
+
+    def is_morning_window(self):
+        """Check if current time is in morning AMO execution window"""
+        now = datetime.now(TIMEZONE)
+        # Morning window: 9:30 AM to 11:00 AM
+        morning_start = now.replace(hour=9, minute=30, second=0, microsecond=0)
+        morning_end = now.replace(hour=11, minute=0, second=0, microsecond=0)
+        return morning_start <= now <= morning_end
+
 
     def run_daily_strategy(self):
-        """Main daily trading loop with comprehensive error handling"""
-        logger.info("🚀 Starting Daily Trading Strategy with Auto Token Management & Email Notifications")
+        """Enhanced daily trading loop with multiple time windows and retry logic"""
+        logger.info("🚀 Starting Daily Trading Strategy with Multiple Windows")
+
+        # Add balance sync tracking
+        last_sync_time = datetime.now(TIMEZONE)
         
         while True:
             try:
                 now = datetime.now(TIMEZONE)
+                current_date = now.date()
+                
+                # Sync balance every hour for live trading
+                if not self.paper_trading:
+                    if (now - last_sync_time).total_seconds() > 3600:  # 1 hour
+                        logger.info("🔄 Hourly balance sync...")
+                        self.sync_with_broker_balance()
+                        last_sync_time = now
+                
+                # Reset daily flag for new trading day
+                if self.last_trading_date != current_date and self.is_trading_day():
+                    self.daily_analysis_completed = False
+                    self.last_trading_date = current_date
+                    logger.info(f"📅 New trading day: {current_date}")
                 
                 # Check if it's a trading day
                 if not self.is_trading_day():
                     logger.info("📅 Weekend/Holiday - No trading")
-                    time.sleep(3600)  # Sleep for 1 hour
+                    time.sleep(3600)
                     continue
                 
-                # Get next analysis time
-                next_analysis = self.get_next_analysis_time()
-                
-                # Wait until analysis time
-                wait_seconds = (next_analysis - now).total_seconds()
-                if wait_seconds > 0:
-                    logger.info(f"⏰ Next analysis at {next_analysis.strftime('%Y-%m-%d %H:%M:%S')} (in {wait_seconds/3600:.1f} hours)")
-                    time.sleep(min(wait_seconds, 3600))  # Sleep max 1 hour at a time
+                # If analysis already completed today, wait for next day
+                if self.daily_analysis_completed:
+                    next_trading_day = self.get_next_trading_day()
+                    wait_seconds = (next_trading_day - now).total_seconds()
+                    logger.info(f"✅ Daily analysis completed. Next trading day: {next_trading_day.strftime('%Y-%m-%d')}")
+                    time.sleep(min(wait_seconds, 3600))
                     continue
                 
-                # Perform daily analysis
-                self.daily_analysis_and_trading()
+                # Get all trading windows for today
+                trading_windows = self.get_trading_windows()
                 
-                # Sleep for 2 hours after analysis
-                time.sleep(7200)
+                # Check if we're in any trading window
+                for window_time in trading_windows:
+                    time_diff = (window_time - now).total_seconds()
+                    
+                    # If we're within 15 minutes of a trading window
+                    if -900 <= time_diff <= 900:  # 15 minutes before or after
+                        logger.info(f"🎯 In trading window: {window_time.strftime('%H:%M')}")
+                        
+                        try:
+                            # Attempt daily analysis
+                            success = self.daily_analysis_and_trading()
+                            
+                            if success:
+                                self.daily_analysis_completed = True
+                                logger.info("✅ Daily analysis completed successfully")
+                                break
+                            else:
+                                logger.warning(f"⚠️ Analysis failed at {window_time.strftime('%H:%M')}, will retry at next window")
+                                
+                        except Exception as e:
+                            logger.error(f"❌ Error during analysis at {window_time.strftime('%H:%M')}: {e}")
+                            continue
+                    
+                    # If we're waiting for this window
+                    elif time_diff > 0:
+                        wait_minutes = time_diff / 60
+                        logger.info(f"⏰ Next window at {window_time.strftime('%H:%M')} (in {wait_minutes:.1f} minutes)")
+                        time.sleep(min(time_diff, 600))
+                        break
                 
+                # If no windows matched, sleep and check again
+                if not any(-900 <= (w - now).total_seconds() <= 900 for w in trading_windows):
+                    time.sleep(300)
+                    
             except KeyboardInterrupt:
                 logger.info("🛑 Trading stopped by user")
                 break
             except Exception as e:
-                logger.error(f"❌ Error in daily strategy: {e}")
-                self.email_manager.send_error_notification("Strategy Error", str(e), self.symbol, self.paper_trading)
-                time.sleep(300)  # Sleep 5 minutes on error
+                logger.error(f"❌ Critical error in daily strategy: {e}")
+                self.email_manager.send_error_notification("Critical Error", str(e), self.symbol, self.paper_trading)
+                time.sleep(300)
         
-        # Cleanup
         self.db_conn.close()
         logger.info("✅ Daily trading strategy ended")
 
+    
     def calculate_all_indicators(self, df):
         """Calculate all technical indicators"""
         try:
